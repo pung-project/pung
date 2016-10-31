@@ -1,0 +1,6 @@
+[submodule "xpir"]
+	path = deps/xpir
+	url = https://github.com/pung-project/xpir.git
+[submodule "capnproto"]
+	path = deps/capnproto
+	url = https://github.com/sandstorm-io/capnproto.git

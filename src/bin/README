@@ -1,0 +1,11 @@
+The client.rs file contains one posssible instantiation of a Pung client application.
+
+In this particular case, our objective is only to measure performance, so 
+the client application does not have a GUI nor does it accept user input directly.
+
+The client.rs file can easily be modified to build a "useful" app that
+interface with a human being and allows for user input, dialing, etc.
+
+The server.rs file, while also written with the objective of measuring performance,
+is likely sufficient as is (or with minor modifications), since all the meaningful
+functionality is implemented client-side.
