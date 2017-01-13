@@ -52,6 +52,8 @@ $ sudo make install
 
 To compile Pung with debug symbols simply run: ``$ cargo build``. The resulting 
 binaries will be: ``target/debug/client`` and ``target/debug/server``.
+To compile PUng with compiler optimizations run: ``$ cargo build --release``. The resulting
+binaries will be: ``target/release/client`` and ``target/release/server``.
 
 
 # Running Pung's microbenchmarks
