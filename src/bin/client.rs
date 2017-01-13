@@ -159,7 +159,7 @@ pub fn main() {
             }
 
             // Get current round number
-            println!("{} - Synchornizing with the Pung server", unique_id);
+            println!("{} - Synchronizing with the Pung server", unique_id);
             try!(client.sync(&wait_scope, &mut event_port));
 
             //        std::thread::sleep(std::time::Duration::new(5, 0));

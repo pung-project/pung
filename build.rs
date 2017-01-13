@@ -5,7 +5,10 @@ extern crate cmake;
 fn main() {
 
     // Compile RPC schema file into rust code
-    capnpc::compile("schema", &["schema/pung.capnp"]).unwrap();
+    capnpc::CompilerCommand::new()
+        .src_prefix("schema")
+        .file("schema/pung.capnp")
+        .run().expect("schema compiler command");
 
 
     // Compile and link pung C++ PIR shim
