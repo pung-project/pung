@@ -1,4 +1,5 @@
 # Pung: Unobservable communication over fully untrusted infrastructure
+[![Build Status](https://travis-ci.org/pung-project/pung.svg?branch=master)](https://travis-ci.org/pung-project/pung)
 
 Pung is a prototype communication system where users can privately talk to each other
 over a fully untrusted channel. 
@@ -46,6 +47,26 @@ $ autoreconf -i
 $ ./configure
 $ make check
 $ sudo make install
+```
+
+## Installing XPIR's dependencies
+
+XPIR depends on boost >= 1.55, gmp, and mpfr. You can install them as follows.
+
+Ubuntu 14.04 (or later) / Debian:
+
+```sh
+$ sudo apt-get install libboost1.55-all-dev libmpfr-dev libgmp-dev
+```
+
+Arch:
+```sh
+$ sudo pacman -S boost mpfr gmp
+```
+
+Gentoo:
+```sh
+$ sudo emerge dev-libs/boost dev-libs/mpfr dev-libs/gmp
 ```
 
 ## Compiling Pung's binaries 

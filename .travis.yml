@@ -1,0 +1,17 @@
+dist: trusty
+sudo: required
+language: rust
+rust:
+  - nightly
+before_install:
+  - yes | sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+  - sudo apt-get update
+install:
+  - sudo apt-get install g++-6 gcc-6 libboost1.55-all-dev libgmp-dev libmpfr-dev
+  - export CC=gcc-6
+  - export CXX=g++-6
+  - cd deps/capnproto/c++
+  - ./setup-autotools.sh
+  - autoreconf -i
+  - ./configure && make -j5 && sudo make install && cd ../../..
+
