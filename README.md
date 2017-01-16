@@ -69,6 +69,9 @@ Gentoo:
 $ sudo emerge dev-libs/boost dev-libs/mpfr dev-libs/gmp
 ```
 
+**Note:** there is no need to compile or install XPIR. It will be built and linked 
+automatically when Pung is compiled (see below).
+
 ## Compiling Pung's binaries 
 
 To compile Pung with debug symbols simply run: ``$ cargo build``. The resulting 
