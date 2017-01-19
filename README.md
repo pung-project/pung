@@ -1,9 +1,11 @@
 # Pung: Unobservable communication over fully untrusted infrastructure
 [![Build Status](https://travis-ci.org/pung-project/pung.svg?branch=master)](https://travis-ci.org/pung-project/pung)
 
-Pung is a prototype communication system where users can privately talk to each other
+Pung is a (research) communication system where users can privately talk to each other
 over a fully untrusted channel. 
-See the [paper](https://www.usenix.org/system/files/conference/osdi16/osdi16-angel.pdf)
+In particular, Pung provably hides all content and metadata in
+a conversation while withstanding global adversaries. 
+See our [paper](https://www.usenix.org/system/files/conference/osdi16/osdi16-angel.pdf)
 for details about the protocol and its guarantees.
 
 
