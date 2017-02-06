@@ -39,7 +39,7 @@ fn pir_decode() {
     let last = 1;
     let test_num = last - first;
 
-    let server = PirServer::new(&mut collection[first..last], alpha, d);
+    let server = PirServer::new(&collection[first..last], alpha, d);
     client.update_params(get_size!(PungTuple), test_num as u64, alpha);
 
 //    for i in 0..test_num {
@@ -54,7 +54,7 @@ fn pir_decode() {
     let last = 3;
     let test_num = last - first;
 
-    let server_2 = PirServer::new(&mut collection[first..last], alpha, d);
+    let server_2 = PirServer::new(&collection[first..last], alpha, d);
     client.update_params(get_size!(PungTuple), test_num as u64, alpha);
 
 //    for i in 0..test_num {
@@ -70,7 +70,7 @@ fn pir_decode() {
     let test_num = last - first;
 
 
-    let server_3 = PirServer::new(&mut collection[first..last], alpha, d);
+    let server_3 = PirServer::new(&collection[first..last], alpha, d);
     client.update_params(get_size!(PungTuple), test_num as u64, alpha);
 
 //    for i in 0..test_num {

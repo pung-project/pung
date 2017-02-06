@@ -149,7 +149,7 @@ impl pung_rpc::Server for PungRpc {
 
         } else {
 
-            self.send_ctx.reqs.entry(id).or_insert(*self.clients.get(&id).unwrap());
+            self.send_ctx.reqs.entry(id).or_insert(self.clients[&id]);
             self.ret_ctx.reqs.entry(id).or_insert(0);
             res.get().set_round(self.round);
         }
@@ -329,7 +329,7 @@ impl pung_rpc::Server for PungRpc {
 
                 if !self.send_ctx.reqs.contains_key(&id) {
                     return gj::Promise::err(Error::failed("Client is not synchronized.".to_string()));
-                } else if *self.send_ctx.reqs.get(&id).unwrap() < tuple_data_list.len() {
+                } else if self.send_ctx.reqs[&id] < tuple_data_list.len() {
                     return gj::Promise::err(Error::failed("Send rate exceeded.".to_string()));
                 }
 
@@ -380,7 +380,7 @@ impl pung_rpc::Server for PungRpc {
                     // Check if queued request is valid, if not, reject it
                     if !self.send_ctx.reqs.contains_key(&cid) {
                         f.reject(Error::failed("Client is not synchronized.".to_string()));
-                    } else if *self.send_ctx.reqs.get(&cid).unwrap() * alias < tuple_list.len() as u32 {
+                    } else if self.send_ctx.reqs[&cid] * alias < tuple_list.len() as u32 {
                         f.reject(Error::failed("Send rate exceeded (queue).".to_string()));
                     } else {
 
@@ -451,7 +451,7 @@ impl pung_rpc::Server for PungRpc {
             let retries = self.max_retries(db.num_buckets());
 
             // Update the number of expected retrievals per client.
-            for (_, v) in &mut self.ret_ctx.reqs {
+            for v in self.ret_ctx.reqs.values_mut() {
                 *v = total_dbs * retries;
             }
 
@@ -476,7 +476,7 @@ impl pung_rpc::Server for PungRpc {
             return gj::Promise::err(Error::failed("Invalid phase for retrieval".to_string()));
         } else if !self.ret_ctx.reqs.contains_key(&id) {
             return gj::Promise::err(Error::failed("(ret) Client is not synchronized.".to_string()));
-        } else if *self.ret_ctx.reqs.get(&id).unwrap() == 0 {
+        } else if self.ret_ctx.reqs[&id] == 0 {
             return gj::Promise::err(Error::failed("retrieveal rate exceeded.".to_string()));
         }
 

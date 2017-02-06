@@ -45,7 +45,7 @@ macro_rules! pir_server {
                    collection.push(x);
                 }
 
-                b.iter(|| PirServer::new(&mut collection, $alpha, $d));
+                b.iter(|| PirServer::new(&collection, $alpha, $d));
             }
 
             let mut bmark = bmark_settings!();
@@ -126,7 +126,7 @@ macro_rules! pir_answer {
                    collection.push(x);
                 }
 
-                let server = PirServer::new(&mut collection, $alpha, $d);
+                let server = PirServer::new(&collection, $alpha, $d);
                 let client = PirClient::new($size, $num, $alpha, $d);
 
                 let query = client.gen_query(rand::random::<u64>() % $num);
@@ -152,7 +152,7 @@ macro_rules! pir_answer {
                    collection.push(x);
                 }
 
-                let server = PirServer::new(&mut collection, $alpha, $d);
+                let server = PirServer::new(&collection, $alpha, $d);
                 let client = PirClient::new($size, $num, $alpha, $d);
 
                 b.iter_with_setup(|| {
@@ -188,7 +188,7 @@ macro_rules! pir_decode {
                    collection.push(x);
                 }
 
-                let server = PirServer::new(&mut collection, $alpha, $d);
+                let server = PirServer::new(&collection, $alpha, $d);
                 let client = PirClient::new($size, $num, $alpha, $d);
 
                 let query = client.gen_query(rand::random::<u64>() % $num);
@@ -219,7 +219,7 @@ macro_rules! pir_decode {
                 }
 
 
-                let server = PirServer::new(&mut collection, $alpha, $d);
+                let server = PirServer::new(&collection, $alpha, $d);
                 let client = PirClient::new($size, $num, $alpha, $d);
 
                 b.iter_with_setup(|| {

@@ -127,7 +127,7 @@ impl PartialOrd for PungTuple {
 impl Clone for PungTuple {
     #[inline]
     fn clone(&self) -> PungTuple {
-        PungTuple { data: *(&self.data) }
+        PungTuple { data: self.data }
     }
 }
 

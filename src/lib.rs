@@ -14,7 +14,6 @@ extern crate gjio;
 extern crate byteorder;
 extern crate timely;
 extern crate timely_communication;
-#[macro_use]
 extern crate abomonation;
 extern crate crypto;
 extern crate time;

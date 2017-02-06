@@ -286,7 +286,7 @@ impl<'a> PungClient<'a> {
             return Err(Error::failed("No messages were provided".to_string()));
         }
 
-        let peer = self.peers.get(&recipient).unwrap();
+        let peer = &self.peers[recipient];
         let mut send_request = self.conn.send_request();
         send_request.get().set_id(self.id);
         send_request.get().set_round(self.round);
@@ -426,7 +426,7 @@ impl<'a> PungClient<'a> {
             }
 
             // get peer object for this sender
-            let peer = self.peers.get(peer_name).unwrap();
+            let peer = &self.peers[peer_name];
 
             // get current count for this peer (in case of repeated messages)
             let count = peer_count.entry(peer_name).or_insert(0);
@@ -645,7 +645,7 @@ impl<'a> PungClient<'a> {
                    -> Result<Vec<Vec<u8>>, Error> {
 
         let retries = self.max_retries();
-        let dummy = self.peers.get("dummy").unwrap();
+        let dummy = &self.peers["dummy"];
         let mut dummy_count = 0;
         let mut rng = rand::ChaChaRng::new_unseeded();
         let mut messages: Vec<Vec<u8>> = Vec::new();
@@ -667,7 +667,7 @@ impl<'a> PungClient<'a> {
                         let num = self.buckets[bucket].num_tuples();
 
                         // Get labels of collection 0 (which is the entire bucket)
-                        let labels = explicit_labels.get(&bucket).unwrap().get(&0).unwrap();
+                        let labels = &explicit_labels[&bucket][&0];
                         assert_eq!(num, labels.len() as u64);
 
                         // Get index of label if available or random otherwise
@@ -700,7 +700,7 @@ impl<'a> PungClient<'a> {
                         let num = self.buckets[bucket].num_tuples();
 
                         // Get bloom filter of collection 0 (entire bucket)
-                        let bloom = bloom_filters.get(&bucket).unwrap().get(&0).unwrap();
+                        let bloom = &bloom_filters[&bucket][&0];
 
                         // Get index of label if available or random otherwise
                         let idx = some_or_random!(util::get_idx_bloom(bloom, &label, num), rng, num);
@@ -752,7 +752,7 @@ impl<'a> PungClient<'a> {
                     -> Result<Vec<Vec<u8>>, Error> {
 
         let retries = self.max_retries();
-        let dummy = self.peers.get("dummy").unwrap();
+        let dummy = &self.peers["dummy"];
         let mut dummy_count = 0;
         let mut rng = rand::ChaChaRng::new_unseeded();
         let mut messages: Vec<Vec<u8>> = Vec::new();
@@ -780,8 +780,8 @@ impl<'a> PungClient<'a> {
                         let cmp2 = util::label_cmp(&label2[..], lmid);
 
                         // Get explicit labels for collections 0 and 1
-                        let col0 = explicit_labels.get(&bucket).unwrap().get(&0).unwrap();
-                        let col1 = explicit_labels.get(&bucket).unwrap().get(&1).unwrap();
+                        let col0 = &explicit_labels[&bucket][&0];
+                        let col1 = &explicit_labels[&bucket][&1];
 
                         // number of elements in collections 0 and 2
                         let len0 = util::collection_len(num, 0, 2) as u64;
@@ -883,8 +883,8 @@ impl<'a> PungClient<'a> {
                         let cmp2 = util::label_cmp(&label2[..], lmid);
 
                         // Get bloom filter for collections 0 and 1
-                        let b0 = bloom_filters.get(&bucket).unwrap().get(&0).unwrap();
-                        let b1 = bloom_filters.get(&bucket).unwrap().get(&1).unwrap();
+                        let b0 = &bloom_filters[&bucket][&0];
+                        let b1 = &bloom_filters[&bucket][&1];
 
                         // number of elements in collections 0 and 2
                         let len0 = util::collection_len(num, 0, 2) as u64;
@@ -1085,7 +1085,7 @@ impl<'a> PungClient<'a> {
                     port: &mut gjio::EventPort)
                     -> Result<Vec<Vec<u8>>, Error> {
 
-        let dummy = self.peers.get("dummy").unwrap();
+        let dummy = &self.peers["dummy"];
         let mut dummy_count = 0;
         let mut rng = rand::ChaChaRng::new_unseeded();
         let mut messages: Vec<Vec<u8>> = Vec::new();
@@ -1117,7 +1117,7 @@ impl<'a> PungClient<'a> {
                     label_list.push(self.next_label(&mut bucket_map, bucket, dummy, &mut dummy_count));
 
                     let lmids = self.buckets[bucket].get_lmids();
-                    let bucket_labels = explicit_labels.get(&bucket).unwrap();
+                    let bucket_labels = &explicit_labels[&bucket];
 
                     for &(peer, ref label) in &label_list {
 
@@ -1136,7 +1136,7 @@ impl<'a> PungClient<'a> {
                         let c_labels = bucket_labels.get(&c_i).unwrap();
                         let idx = some_or_random!(util::get_index(c_labels, &label), rng, c_labels.len() as u64);
 
-                        for parts in self.h4_mappings.get(&c_i).unwrap() {
+                        for parts in &self.h4_mappings[&c_i] {
 
                             let res = available.is_superset(parts);
 
@@ -1227,7 +1227,7 @@ impl<'a> PungClient<'a> {
                     label_list.push(self.next_label(&mut bucket_map, bucket, dummy, &mut dummy_count));
 
                     let lmids = self.buckets[bucket].get_lmids();
-                    let bucket_blooms = bloom_filters.get(&bucket).unwrap();
+                    let bucket_blooms = &bloom_filters[&bucket];
                     let num = self.buckets[bucket].num_tuples();
 
                     for &(peer, ref label) in &label_list {
@@ -1248,7 +1248,7 @@ impl<'a> PungClient<'a> {
                         let c_bloom = bucket_blooms.get(&c_i).unwrap();
                         let idx = some_or_random!(util::get_idx_bloom(c_bloom, &label, c_num), rng, c_num);
 
-                        for parts in self.h4_mappings.get(&c_i).unwrap() {
+                        for parts in &self.h4_mappings[&c_i] {
 
                             let res = available.is_superset(parts);
 
