@@ -11,8 +11,9 @@ for details about the protocol and its guarantees.
 
 # Compiling Pung
 
-Pung is written in [Rust](https://www.rust-lang.org/) and compiles under the nightly compiler.
-To set the nightly compiler as default simply run:
+Pung is written in [Rust](https://www.rust-lang.org/) and compiles under the nightly compiler (nighly
+  is required for our benchmarking framework).
+If you wish to use the nightly compiler as default simply run:
 
 ```sh
 $ rustup install nightly

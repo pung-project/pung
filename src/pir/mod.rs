@@ -1,11 +1,11 @@
 use libc;
 
 // Functions from C++ shim
-#[link(name = "gomp")]
-#[link(name = "gmp")]
-#[link(name = "mpfr")]
-#[link(name = "boost_thread")]
-#[link(name = "boost_system")]
+//#[link(name = "gomp")]
+//#[link(name = "gmp")]
+//#[link(name = "mpfr")]
+//#[link(name = "boost_thread")]
+//#[link(name = "boost_system")]
 extern "C" {
     fn cpp_buffer_free(buffer: *mut libc::c_void);
 }

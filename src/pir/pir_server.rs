@@ -4,11 +4,11 @@ use std::slice;
 use super::PirAnswer;
 
 // functions from C++ PungPIR shim
-#[link(name = "gomp")]
-#[link(name = "gmp")]
-#[link(name = "mpfr")]
-#[link(name = "boost_thread")]
-#[link(name = "boost_system")]
+//#[link(name = "gomp")]
+//#[link(name = "gmp")]
+//#[link(name = "mpfr")]
+//#[link(name = "boost_thread")]
+//#[link(name = "boost_system")]
 extern "C" {
     fn cpp_server_setup(len: libc::uint64_t,
                         collection: *const libc::uint8_t,

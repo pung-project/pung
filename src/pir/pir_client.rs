@@ -4,11 +4,11 @@ use std::slice;
 use super::{PirQuery, PirResult};
 
 // Functions from C++ shim
-#[link(name = "gomp")]
-#[link(name = "gmp")]
-#[link(name = "mpfr")]
-#[link(name = "boost_thread")]
-#[link(name = "boost_system")]
+// #[link(name = "gomp")]
+// #[link(name = "gmp")]
+// #[link(name = "mpfr")]
+// #[link(name = "boost_thread")]
+// #[link(name = "boost_system")]
 extern "C" {
     fn cpp_client_setup(len: libc::uint64_t,
                         num: libc::uint64_t,
