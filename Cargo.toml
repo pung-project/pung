@@ -15,8 +15,8 @@ capnp = "0.7.4"
 capnp-rpc = "0.7.4"
 gj = "0.2.0"
 gjio = "0.1.3"
-timely = "0.1.15"
-timely_communication = "0.1.5"
+timely = "0.3.0"
+timely_communication = "0.1.8"
 abomonation = "0.4.3"
 byteorder = "1.0.0"
 rand = "0.3.15"
@@ -27,7 +27,7 @@ getopts = "0.2.14"
 bit-vec = "0.4.3"
 
 [dev-dependencies]
-criterion = { git = "https://github.com/japaric/criterion.rs.git" }
+criterion = { git = "http://github.com/sga001/criterion.rs" }
 
 [profile.release]
 opt-level = 3

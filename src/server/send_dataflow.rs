@@ -6,7 +6,6 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 // Naiad libraries
-use timely::dataflow::*;
 use timely::dataflow::channels::pact::Pipeline;
 use timely::dataflow::operators::*;
 use timely::dataflow::scopes::root::Root;
@@ -24,7 +23,7 @@ pub fn graph(worker: &mut Root<Generic>, dbase: db::DatabasePtr, buckets: usize)
         partitions.push(util::label_marker(i, buckets));
     }
 
-    let (input, probe) = worker.scoped(move |dataflow| {
+    let (input, probe) = worker.dataflow(move |dataflow| {
 
         // Get input from RPCs
         let (s_input, stream) = dataflow.new_input::<db::PungTuple>();
@@ -86,7 +85,7 @@ pub fn graph(worker: &mut Root<Generic>, dbase: db::DatabasePtr, buckets: usize)
                     output.session(&time).give(0);
               });
             })
-            .probe().0;
+            .probe();
 
         (s_input, s_probe)
     });

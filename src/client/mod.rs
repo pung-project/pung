@@ -550,11 +550,11 @@ impl<'a> PungClient<'a> {
 
         for bucket_idx in 0..self.buckets.len() {
 
-            let mut bucket_map = label_map.entry(bucket_idx).or_insert_with(HashMap::new);
+            let bucket_map = label_map.entry(bucket_idx).or_insert_with(HashMap::new);
 
             for collection_idx in &meaningful_labels {
 
-                let mut collection_vec = bucket_map.entry(*collection_idx).or_insert_with(Vec::new);
+                let collection_vec = bucket_map.entry(*collection_idx).or_insert_with(Vec::new);
 
                 // This is the returned list(label) = list([u8])
                 let label_list = try!(collection_list.get(response_idx));
@@ -606,7 +606,7 @@ impl<'a> PungClient<'a> {
 
         for bucket_idx in 0..self.buckets.len() {
 
-            let mut bucket_map = bloom_map.entry(bucket_idx).or_insert_with(HashMap::new);
+            let bucket_map = bloom_map.entry(bucket_idx).or_insert_with(HashMap::new);
             let num_tuples = self.buckets[bucket_idx].num_tuples();
 
 

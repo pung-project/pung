@@ -12,13 +12,8 @@
 //!
 #![allow(deprecated)]
 
-extern crate rand;
-extern crate bit_vec;
-
 use bit_vec::BitVec;
 
-#[cfg(test)]
-use rand::Rng;
 use std::cmp;
 use std::f64;
 use std::hash::{Hash, Hasher, SipHasher};
@@ -154,29 +149,37 @@ impl Bloom {
     }
 }
 
-#[test]
-fn bloom_test_set() {
-    let mut bloom = Bloom::new(10, 80);
-    let key: &Vec<u8> = &rand::thread_rng().gen_iter::<u8>().take(16).collect();
-    assert!(bloom.check(key) == false);
-    bloom.set(&key);
-    assert!(bloom.check(key.clone()) == true);
-}
+#[cfg(test)]
+mod test {
+    extern crate rand;
+    use super::Bloom;
 
-#[test]
-fn bloom_test_check_and_set() {
-    let mut bloom = Bloom::new(10, 80);
-    let key: &Vec<u8> = &rand::thread_rng().gen_iter::<u8>().take(16).collect();
-    assert!(bloom.check_and_set(key) == false);
-    assert!(bloom.check_and_set(key.clone()) == true);
-}
+    use rand::Rng;
 
-#[test]
-fn bloom_test_clear() {
-    let mut bloom = Bloom::new(10, 80);
-    let key: &Vec<u8> = &rand::thread_rng().gen_iter::<u8>().take(16).collect();
-    bloom.set(&key);
-    assert!(bloom.check(&key) == true);
-    bloom.clear();
-    assert!(bloom.check(&key) == false);
+    #[test]
+    fn bloom_test_set() {
+        let mut bloom = Bloom::new(10, 80);
+        let key: &Vec<u8> = &rand::thread_rng().gen_iter::<u8>().take(16).collect();
+        assert!(bloom.check(key) == false);
+        bloom.set(&key);
+        assert!(bloom.check(key.clone()) == true);
+    }
+
+    #[test]
+    fn bloom_test_check_and_set() {
+        let mut bloom = Bloom::new(10, 80);
+        let key: &Vec<u8> = &rand::thread_rng().gen_iter::<u8>().take(16).collect();
+        assert!(bloom.check_and_set(key) == false);
+        assert!(bloom.check_and_set(key.clone()) == true);
+    }
+
+    #[test]
+    fn bloom_test_clear() {
+        let mut bloom = Bloom::new(10, 80);
+        let key: &Vec<u8> = &rand::thread_rng().gen_iter::<u8>().take(16).collect();
+        bloom.set(&key);
+        assert!(bloom.check(&key) == true);
+        bloom.clear();
+        assert!(bloom.check(&key) == false);
+    }
 }

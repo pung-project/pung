@@ -40,7 +40,7 @@ processQuery(char*q, uint64_t len, uint64_t len_element, uint64_t *rlen, uint64_
   PIRReplyGenerator *r_generator = new PIRReplyGenerator(this->params, *crypto, db); 
   r_generator->setPirParams(this->params);
 
-  for (int i=0; i<len; i+=len_element)
+  for (unsigned int i=0; i<len; i+=len_element)
   {
     r_generator->pushQuery(&q[i]);
   }
@@ -57,11 +57,11 @@ processQuery(char*q, uint64_t len, uint64_t len_element, uint64_t *rlen, uint64_
   *rlen_element = r_generator->getReplyElementBytesize();
   *rlen = r.size() * *rlen_element;
 
-  char *outptr, *result, *tmp;
+  char *outptr, *result; 
   result = (char*)calloc(*rlen, sizeof(char));
   outptr = result;
   
-  for(int i=0; i<r.size(); i++)
+  for(unsigned int i=0; i<r.size(); i++)
   {
     memcpy(outptr, r[i], *rlen_element);
     outptr += *rlen_element;
@@ -133,7 +133,7 @@ processReply(char* r, uint64_t len, uint64_t len_element, uint64_t *rlen)
 {
   PIRReplyExtraction *r_extractor = new PIRReplyExtraction(params, *crypto);
 
-  for (int i=0; i<len; i+=len_element)
+  for (unsigned int i=0; i<len; i+=len_element)
   {
     //cout<<"Pushing encrypted element"<<endl;
     r_extractor->pushEncryptedReply(&r[i]);
@@ -165,7 +165,7 @@ processReply(char* r, uint64_t len, uint64_t len_element, uint64_t *rlen)
 
   outptr = (char*) calloc(maxFileBytesize, sizeof(char));
   uint64_t offset = this->lastChosenIdx % params.alpha;
-  for (int i=0; i<maxFileBytesize; i++)
+  for (unsigned int i=0; i<maxFileBytesize; i++)
   {
     outptr[i] = result[offset*maxFileBytesize + i];
   }
@@ -223,7 +223,7 @@ cpp_client_generate_query(void* pir, uint64_t chosen_idx, uint64_t* rlen_total_b
   result = (char*)calloc(*rlen_total_bytes, sizeof(char));
   outptr = result;
 
-  for(int i=0; i<q.size(); i++)
+  for(unsigned int i=0; i < q.size(); i++)
   {
     memcpy(outptr, q[i], rlen_element);
     outptr += rlen_element;
@@ -282,9 +282,9 @@ cpp_server_setup(uint64_t len_total_bytes, char *db, uint64_t num_logical_entrie
 
     //cout<<"Num extra entries on server : "<<num_extra_entries<<endl;
     //cout<<"Num extra bytes on server : "<<num_extra_bytes<<endl;
-    for (int i=0; i<len_total_bytes; i++) 
+    for (unsigned int i=0; i<len_total_bytes; i++) 
       padded_db[i] = db[i];
-    for (int i=len_total_bytes; i<num_extra_bytes+len_total_bytes; i++)
+    for (unsigned int i=len_total_bytes; i<num_extra_bytes+len_total_bytes; i++)
       padded_db[i] = (char)1;
   
     //cout<<"padded db is "<<endl;

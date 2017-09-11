@@ -146,7 +146,7 @@ impl Abomonation for PungTuple {
 
         bytes = if TUPLE_SIZE <= temp.len() {
 
-            let (mine, mut rest) = temp.split_at_mut(TUPLE_SIZE);
+            let (mine, rest) = temp.split_at_mut(TUPLE_SIZE);
             self.data = *(mine.as_ptr() as *const [u8; TUPLE_SIZE]);
             rest
 

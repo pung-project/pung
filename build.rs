@@ -12,11 +12,12 @@ fn main() {
 
 
     // Compile and link pung C++ PIR shim
-    gcc::Config::new()
+    gcc::Build::new()
                  .file("src/pir/cpp/pungPIR.cpp")
                  .include("deps/xpir/")
                  .flag("-std=c++11")
                  .flag("-fopenmp")
+                 .flag("-Wno-unused-parameter")
                  .pic(true)
                  .cpp(true)
                  .compile("libpung_pir.a");

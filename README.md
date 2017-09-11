@@ -99,10 +99,10 @@ if one wished to only run the PIR microbenchmarks it is sufficient to pass in "b
 
 # Running Pung
 
-The first step is to launch the server: 
+The first step is to launch the server (the -m flag tells it to expect 2 messages each round): 
 
 ```sh
-$ ./target/release/server
+$ ./target/release/server -m 2
 ```
 
 Pass in --help to see available options. The second step is to launch the client: 
@@ -114,7 +114,8 @@ $ ./target/release/client -n "user2" -p "user1" -x "secret" -r 10
 
 The above will run two clients with ids "user1" and "user2" that will communicate with
 each other using secret "secret" for 10 rounds. One can also run a single client by having it
-talk to itself (i.e., passing the same argument to -n and -p).
+talk to itself (i.e., passing the same argument to -n and -p for the client and 
+setting the server to expect only one message: -m 1).
 
 
 Pass in --help to see available options. It is important that the client and the server

@@ -3,7 +3,6 @@
 extern crate libc;
 
 extern crate rand;
-extern crate quicksort;
 extern crate bit_vec;
 
 extern crate capnp;
@@ -16,7 +15,6 @@ extern crate timely;
 extern crate timely_communication;
 extern crate abomonation;
 extern crate crypto;
-extern crate time;
 
 /// Auto-generated stubs from the [Cap'n Proto RPC protocol](../capnp_rpc/index.html).
 pub mod pung_capnp {

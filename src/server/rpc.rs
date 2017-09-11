@@ -440,7 +440,7 @@ impl pung_rpc::Server for PungRpc {
 
             self.send_ctx.handler.input.advance_to(self.round as usize + 1);
 
-            while self.send_ctx.handler.probe.le(&RootTimestamp::new(self.round as usize)) {
+            while self.send_ctx.handler.probe.less_equal(&RootTimestamp::new(self.round as usize)) {
                 self.worker.step();
             }
 
