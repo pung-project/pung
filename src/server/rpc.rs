@@ -7,9 +7,10 @@ use gj;
 
 // RPC Stubs
 use pung_capnp::pung_rpc;
-use pung_capnp::pung_rpc::{CloseParams, CloseResults, GetMappingParams, GetMappingResults, RegisterParams,
-                           RegisterResults, RetrParams, RetrResults, SendParams, SendResults, SyncParams,
-                           SyncResults, GetBloomParams, GetBloomResults, ChangeExtraParams, ChangeExtraResults};
+use pung_capnp::pung_rpc::{ChangeExtraParams, ChangeExtraResults, CloseParams, CloseResults,
+                           GetBloomParams, GetBloomResults, GetMappingParams, GetMappingResults,
+                           RegisterParams, RegisterResults, RetrParams, RetrResults, SendParams,
+                           SendResults, SyncParams, SyncResults};
 
 use rand::ChaChaRng;
 use rand::Rng;
@@ -63,14 +64,14 @@ pub struct PungRpc {
 
 
 impl PungRpc {
-    pub fn new(worker: Root<Generic>,
-               send: timely_shim::SendHandler,
-               dbase: db::DatabasePtr,
-               extra: usize,
-               min_messages: u32,
-               opt_scheme: db::OptScheme)
-               -> PungRpc {
-
+    pub fn new(
+        worker: Root<Generic>,
+        send: timely_shim::SendHandler,
+        dbase: db::DatabasePtr,
+        extra: usize,
+        min_messages: u32,
+        opt_scheme: db::OptScheme,
+    ) -> PungRpc {
         let mut extra_tuples = Vec::with_capacity(extra);
         let mut rng = ChaChaRng::new_unseeded();
 
@@ -91,7 +92,9 @@ impl PungRpc {
                 handler: send,
                 count: 0,
             },
-            ret_ctx: RetCtx { reqs: HashMap::new() },
+            ret_ctx: RetCtx {
+                reqs: HashMap::new(),
+            },
             dbase: dbase,
             extra_tuples: extra_tuples,
             min_messages: min_messages,
@@ -118,8 +121,11 @@ impl PungRpc {
 
 impl pung_rpc::Server for PungRpc {
     // TODO: Upgrade this to receive keys for directory service
-    fn register(&mut self, params: RegisterParams, mut res: RegisterResults) -> gj::Promise<(), Error> {
-
+    fn register(
+        &mut self,
+        params: RegisterParams,
+        mut res: RegisterResults,
+    ) -> gj::Promise<(), Error> {
         let req = pry!(params.get());
         let rate: u32 = req.get_rate();
         let id: u64 = self.next_id();
@@ -135,7 +141,6 @@ impl pung_rpc::Server for PungRpc {
 
     // TODO: upgrade to be able to replace directory service key
     fn sync(&mut self, params: SyncParams, mut res: SyncResults) -> gj::Promise<(), Error> {
-
         let id = pry!(params.get()).get_id();
 
         if !self.clients.contains_key(&id) {
@@ -144,11 +149,8 @@ impl pung_rpc::Server for PungRpc {
 
         // If we are already in receive phase, client has to wait for next send phase to begin
         if self.phase == Phase::Receiving {
-
             res.get().set_round(self.round + 1);
-
         } else {
-
             self.send_ctx.reqs.entry(id).or_insert(self.clients[&id]);
             self.ret_ctx.reqs.entry(id).or_insert(0);
             res.get().set_round(self.round);
@@ -159,7 +161,6 @@ impl pung_rpc::Server for PungRpc {
 
 
     fn close(&mut self, params: CloseParams, mut res: CloseResults) -> gj::Promise<(), Error> {
-
         let req = pry!(params.get());
         let id: u64 = req.get_id();
 
@@ -181,8 +182,11 @@ impl pung_rpc::Server for PungRpc {
         gj::Promise::ok(())
     }
 
-    fn change_extra(&mut self, params: ChangeExtraParams, mut res: ChangeExtraResults) -> gj::Promise<(), Error> {
-
+    fn change_extra(
+        &mut self,
+        params: ChangeExtraParams,
+        mut res: ChangeExtraResults,
+    ) -> gj::Promise<(), Error> {
         let req = pry!(params.get());
         let extra: u64 = req.get_extra();
 
@@ -201,8 +205,11 @@ impl pung_rpc::Server for PungRpc {
         gj::Promise::ok(())
     }
 
-    fn get_mapping(&mut self, params: GetMappingParams, mut res: GetMappingResults) -> gj::Promise<(), Error> {
-
+    fn get_mapping(
+        &mut self,
+        params: GetMappingParams,
+        mut res: GetMappingResults,
+    ) -> gj::Promise<(), Error> {
         let round = pry!(params.get()).get_round();
 
         if round != self.round {
@@ -215,15 +222,16 @@ impl pung_rpc::Server for PungRpc {
         // Indices of collections that contain meaningful labels
         let label_collections: Vec<usize> = util::label_collections(self.opt_scheme);
 
-        let mut collection_list = res.get().init_labels((db.num_buckets() * label_collections.len()) as u32);
+        let mut collection_list = res.get()
+            .init_labels((db.num_buckets() * label_collections.len()) as u32);
         let mut collection_idx = 0;
 
         for bucket in db.get_buckets() {
-
             for i in &label_collections {
-
                 let collection = bucket.get_collection(*i);
-                let mut label_list = collection_list.borrow().init(collection_idx, collection.len() as u32);
+                let mut label_list = collection_list
+                    .borrow()
+                    .init(collection_idx, collection.len() as u32);
 
                 for j in 0..collection.len() {
                     label_list.set(j as u32, collection.get_label(j));
@@ -236,7 +244,11 @@ impl pung_rpc::Server for PungRpc {
         gj::Promise::ok(())
     }
 
-    fn get_bloom(&mut self, params: GetBloomParams, mut res: GetBloomResults) -> gj::Promise<(), Error> {
+    fn get_bloom(
+        &mut self,
+        params: GetBloomParams,
+        mut res: GetBloomResults,
+    ) -> gj::Promise<(), Error> {
         let round = pry!(params.get()).get_round();
 
         if round != self.round {
@@ -250,11 +262,11 @@ impl pung_rpc::Server for PungRpc {
         // Indices of collections that contain meaningful labels
         let label_collections: Vec<usize> = util::label_collections(self.opt_scheme);
 
-        let mut collection_list = res.get().init_blooms((db.num_buckets() * label_collections.len()) as u32);
+        let mut collection_list = res.get()
+            .init_blooms((db.num_buckets() * label_collections.len()) as u32);
         let mut collection_idx = 0;
 
         for bucket in db.get_buckets() {
-
             for i in &label_collections {
                 let collection = bucket.get_collection(*i);
                 collection_list.set(collection_idx, &collection.get_bloom().to_bytes());
@@ -267,7 +279,6 @@ impl pung_rpc::Server for PungRpc {
 
 
     fn send(&mut self, params: SendParams, mut res: SendResults) -> gj::Promise<(), Error> {
-
         let req = pry!(params.get());
         let id: u64 = req.get_id();
         let round: u64 = req.get_round();
@@ -286,7 +297,6 @@ impl pung_rpc::Server for PungRpc {
         let (promise, fulfiller) = gj::Promise::and_fulfiller();
 
         {
-
             // Get tuples
             if !req.has_tuples() {
                 return gj::Promise::err(Error::failed("Number of tuples sent is 0".to_string()));
@@ -297,21 +307,19 @@ impl pung_rpc::Server for PungRpc {
             let send_fulfillers = &mut self.send_ctx.handler.fulfillers.borrow_mut();
 
             if round > self.round {
-
                 // Queue request if round > self.round
                 let queue_list = &mut self.send_ctx.queue.entry(round).or_insert_with(Vec::new);
 
-                let mut tuple_list: Vec<db::PungTuple> = Vec::with_capacity(tuple_data_list.len() as usize);
+                let mut tuple_list: Vec<db::PungTuple> =
+                    Vec::with_capacity(tuple_data_list.len() as usize);
 
                 for i in 0..tuple_data_list.len() {
-
                     let tuple_data = pry!(tuple_data_list.get(i));
                     let mut offset: usize = 0;
 
                     // If power of two, clone the tuple under the two provided labels
                     // The format of the message is: (label1, label2, cipher, mac)
                     if self.opt_scheme >= db::OptScheme::Aliasing {
-
                         offset = db::LABEL_SIZE;
                         let mut tuple_alias_data = Vec::with_capacity(db::TUPLE_SIZE);
                         tuple_alias_data.extend_from_slice(&tuple_data[..offset]);
@@ -324,11 +332,11 @@ impl pung_rpc::Server for PungRpc {
                 }
 
                 queue_list.push((id, tuple_list, fulfiller));
-
             } else {
-
                 if !self.send_ctx.reqs.contains_key(&id) {
-                    return gj::Promise::err(Error::failed("Client is not synchronized.".to_string()));
+                    return gj::Promise::err(Error::failed(
+                        "Client is not synchronized.".to_string(),
+                    ));
                 } else if self.send_ctx.reqs[&id] < tuple_data_list.len() {
                     return gj::Promise::err(Error::failed("Send rate exceeded.".to_string()));
                 }
@@ -338,13 +346,11 @@ impl pung_rpc::Server for PungRpc {
                 }
 
                 for i in 0..tuple_data_list.len() {
-
                     let tuple_data = pry!(tuple_data_list.get(i));
                     let mut offset: usize = 0;
 
                     // If power of two, clone the tuple under the two provided labels
                     if self.opt_scheme >= db::OptScheme::Aliasing {
-
                         offset = db::LABEL_SIZE;
                         let mut tuple_alias_data = Vec::with_capacity(db::TUPLE_SIZE);
                         tuple_alias_data.extend_from_slice(&tuple_data[..offset]);
@@ -368,9 +374,7 @@ impl pung_rpc::Server for PungRpc {
 
             // Push any queued requests for the current round
             if let Some(mut queued) = self.send_ctx.queue.remove(&self.round) {
-
                 for (cid, mut tuple_list, f) in queued.drain(..) {
-
                     let alias = if self.opt_scheme >= db::OptScheme::Aliasing {
                         2
                     } else {
@@ -383,7 +387,6 @@ impl pung_rpc::Server for PungRpc {
                     } else if self.send_ctx.reqs[&cid] * alias < tuple_list.len() as u32 {
                         f.reject(Error::failed("Send rate exceeded (queue).".to_string()));
                     } else {
-
                         // if valid, process it as if it had been sent this round
 
                         if let Some(entry) = self.send_ctx.reqs.get_mut(&cid) {
@@ -405,7 +408,6 @@ impl pung_rpc::Server for PungRpc {
 
         // promise returned to the client (when we have all tuples we can return this info)
         let ret_promise = promise.then(move |ret: Rc<(Vec<u64>, Vec<Vec<u8>>)>| {
-
             {
                 let mut num_list = res.get().init_num_messages(ret.0.len() as u32);
 
@@ -415,7 +417,6 @@ impl pung_rpc::Server for PungRpc {
             }
 
             if opt_scheme >= db::OptScheme::Hybrid2 {
-
                 let mut lmid_list = res.get().init_min_labels(ret.1.len() as u32);
                 for i in 0..ret.1.len() {
                     lmid_list.set(i as u32, &(ret.1[i])[..]);
@@ -431,16 +432,23 @@ impl pung_rpc::Server for PungRpc {
         // TODO: maybe add timeout? Right now it waits for all clients to send.
 
         // Check to see if all clients have sent all their tuples
-        if !self.send_ctx.reqs.values().any(|&x| x > 0) && self.phase == Phase::Sending &&
-           self.send_ctx.count >= self.min_messages {
-
+        if !self.send_ctx.reqs.values().any(|&x| x > 0) && self.phase == Phase::Sending
+            && self.send_ctx.count >= self.min_messages
+        {
             for t in &self.extra_tuples {
                 self.send_ctx.handler.input.send(t.clone());
             }
 
-            self.send_ctx.handler.input.advance_to(self.round as usize + 1);
+            self.send_ctx
+                .handler
+                .input
+                .advance_to(self.round as usize + 1);
 
-            while self.send_ctx.handler.probe.less_equal(&RootTimestamp::new(self.round as usize)) {
+            while self.send_ctx
+                .handler
+                .probe
+                .less_equal(&RootTimestamp::new(self.round as usize))
+            {
                 self.worker.step();
             }
 
@@ -463,7 +471,6 @@ impl pung_rpc::Server for PungRpc {
 
 
     fn retr(&mut self, params: RetrParams, mut res: RetrResults) -> gj::Promise<(), Error> {
-
         let req = pry!(params.get());
         let id: u64 = req.get_id();
         let round: u64 = req.get_round();
@@ -475,7 +482,9 @@ impl pung_rpc::Server for PungRpc {
         } else if self.phase != Phase::Receiving {
             return gj::Promise::err(Error::failed("Invalid phase for retrieval".to_string()));
         } else if !self.ret_ctx.reqs.contains_key(&id) {
-            return gj::Promise::err(Error::failed("(ret) Client is not synchronized.".to_string()));
+            return gj::Promise::err(Error::failed(
+                "(ret) Client is not synchronized.".to_string(),
+            ));
         } else if self.ret_ctx.reqs[&id] == 0 {
             return gj::Promise::err(Error::failed("retrieveal rate exceeded.".to_string()));
         }
@@ -517,8 +526,7 @@ impl pung_rpc::Server for PungRpc {
             }
             // let end = time::PreciseTime::now();
             // println!("bucket {}, collection {}, level {}, answer time: {} usec",
-            //         bucket_idx, collection_idx, level_idx, start.to(end).num_microseconds().unwrap());
-
+            // bucket_idx, collection_idx, level_idx, start.to(end).num_microseconds().unwrap());
         }
 
         // Account for this retrieval
@@ -528,7 +536,6 @@ impl pung_rpc::Server for PungRpc {
 
         // Check to see if we are done and we can move on to next round
         if !self.ret_ctx.reqs.values().any(|&x| x > 0) {
-
             self.send_ctx.reqs = self.clients.clone();
             self.send_ctx.count = 0;
             self.round += 1;

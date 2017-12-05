@@ -36,7 +36,12 @@ impl Bloom {
         let k_num = Bloom::optimal_k_num(bitmap_bits, items_count);
         let bitmap = BitVec::from_elem(bitmap_bits as usize, false);
         let sips = [Bloom::sip_new(0, 1), Bloom::sip_new(2, 3)];
-        Bloom { bitmap: bitmap, bitmap_bits: bitmap_bits, k_num: k_num, sips: sips }
+        Bloom {
+            bitmap: bitmap,
+            bitmap_bits: bitmap_bits,
+            k_num: k_num,
+            sips: sips,
+        }
     }
 
     /// Create a new bloom filter structure.
@@ -71,7 +76,9 @@ impl Bloom {
 
     /// Record the presence of an item.
     pub fn set<T>(&mut self, item: T)
-        where T: Hash {
+    where
+        T: Hash,
+    {
         let mut hashes = [0u64, 0u64];
         for k_i in 0..self.k_num {
             let bit_offset = (self.bloom_hash(&mut hashes, &item, k_i) % self.bitmap_bits) as usize;
@@ -82,7 +89,9 @@ impl Bloom {
     /// Check if an item is present in the set.
     /// There can be false positives, but no false negatives.
     pub fn check<T>(&self, item: T) -> bool
-        where T: Hash {
+    where
+        T: Hash,
+    {
         let mut hashes = [0u64, 0u64];
         for k_i in 0..self.k_num {
             let bit_offset = (self.bloom_hash(&mut hashes, &item, k_i) % self.bitmap_bits) as usize;
@@ -96,7 +105,9 @@ impl Bloom {
     /// Record the presence of an item in the set,
     /// and return the previous state of this item.
     pub fn check_and_set<T>(&mut self, item: T) -> bool
-        where T: Hash {
+    where
+        T: Hash,
+    {
         let mut hashes = [0u64, 0u64];
         let mut found = true;
         for k_i in 0..self.k_num {
@@ -127,7 +138,9 @@ impl Bloom {
     }
 
     fn bloom_hash<T>(&self, hashes: &mut [u64; 2], item: &T, k_i: u32) -> u64
-        where T: Hash {
+    where
+        T: Hash,
+    {
         if k_i < 2 {
             let sip = &mut self.sips[k_i as usize].clone();
             item.hash(sip);

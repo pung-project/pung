@@ -1,15 +1,15 @@
 // This file contains all the sending and retrieving routines
 // that can be used by a client application (see src/bin/client.rs) to
-// create a Pung client. All the client-side cryptographic operations 
+// create a Pung client. All the client-side cryptographic operations
 // (not related to PIR) are found in pcrypto.rs.
 
 // serialization libraries
 use capnp;
 use capnp::Error;
-use capnp_rpc::{RpcSystem, rpc_twoparty_capnp, twoparty};
+use capnp_rpc::{rpc_twoparty_capnp, twoparty, RpcSystem};
 
 use db;
-use gj; 
+use gj;
 use gjio; // asynchronous IO libraries
 
 use pir::pir_client::PirClient;
@@ -35,7 +35,11 @@ struct PungPeer {
 
 impl PungPeer {
     pub fn new(uid_self: u64, uid_peer: u64, keys: pcrypto::PungKeys) -> PungPeer {
-        PungPeer { uid_self: uid_self, uid_peer: uid_peer, keys: keys }
+        PungPeer {
+            uid_self: uid_self,
+            uid_peer: uid_peer,
+            keys: keys,
+        }
     }
 }
 
@@ -89,24 +93,22 @@ macro_rules! h_set {
 
 
 impl<'a> PungClient<'a> {
-    pub fn new(name: &'a str,
-               address: &str,
-               send_rate: u32,
-               ret_rate: u32,
-               depth: u64,
-               ret_scheme: db::RetScheme,
-               opt_scheme: db::OptScheme,
-               scope: &gj::WaitScope,
-               port: &mut gjio::EventPort)
-               -> PungClient<'a> {
-
+    pub fn new(
+        name: &'a str,
+        address: &str,
+        send_rate: u32,
+        ret_rate: u32,
+        depth: u64,
+        ret_scheme: db::RetScheme,
+        opt_scheme: db::OptScheme,
+        scope: &gj::WaitScope,
+        port: &mut gjio::EventPort,
+    ) -> PungClient<'a> {
         let addr = match address.to_socket_addrs() {
-            Ok(mut v) => {
-                match v.next() {
-                    Some(a) => a,
-                    None => panic!("Error: Address iterator is empty."),
-                }
-            }
+            Ok(mut v) => match v.next() {
+                Some(a) => a,
+                None => panic!("Error: Address iterator is empty."),
+            },
 
             Err(e) => panic!("Error parsing address: {:?}", e),
         };
@@ -122,10 +124,12 @@ impl<'a> PungClient<'a> {
         let mut reader_options: capnp::message::ReaderOptions = Default::default();
         reader_options.traversal_limit_in_words(300 * 1024 * 1024);
 
-        let network = Box::new(twoparty::VatNetwork::new(stream.clone(),
-                                                         stream,
-                                                         rpc_twoparty_capnp::Side::Client,
-                                                         Default::default()));
+        let network = Box::new(twoparty::VatNetwork::new(
+            stream.clone(),
+            stream,
+            rpc_twoparty_capnp::Side::Client,
+            Default::default(),
+        ));
 
         // Initialize RPC client
         let mut rpc_system = RpcSystem::new(network, None);
@@ -143,10 +147,42 @@ impl<'a> PungClient<'a> {
         if opt_scheme == db::OptScheme::Hybrid4 {
             // The following are parts with which to build the collection
             // For example, collection 0 can be built using 0, 1 XOR 4, 2 XOR 6, or the rest.
-            h4_mappings.insert(0, [h_set!([0]), h_set!([1, 4]), h_set!([2, 6]), h_set!([3, 5, 7, 8])]);
-            h4_mappings.insert(1, [h_set!([1]), h_set!([0, 4]), h_set!([3, 7]), h_set!([2, 5, 6, 8])]);
-            h4_mappings.insert(2, [h_set!([2]), h_set!([3, 5]), h_set!([0, 6]), h_set!([1, 4, 7, 8])]);
-            h4_mappings.insert(3, [h_set!([3]), h_set!([2, 5]), h_set!([1, 7]), h_set!([0, 4, 6, 8])]);
+            h4_mappings.insert(
+                0,
+                [
+                    h_set!([0]),
+                    h_set!([1, 4]),
+                    h_set!([2, 6]),
+                    h_set!([3, 5, 7, 8]),
+                ],
+            );
+            h4_mappings.insert(
+                1,
+                [
+                    h_set!([1]),
+                    h_set!([0, 4]),
+                    h_set!([3, 7]),
+                    h_set!([2, 5, 6, 8]),
+                ],
+            );
+            h4_mappings.insert(
+                2,
+                [
+                    h_set!([2]),
+                    h_set!([3, 5]),
+                    h_set!([0, 6]),
+                    h_set!([1, 4, 7, 8]),
+                ],
+            );
+            h4_mappings.insert(
+                3,
+                [
+                    h_set!([3]),
+                    h_set!([2, 5]),
+                    h_set!([1, 7]),
+                    h_set!([0, 4, 6, 8]),
+                ],
+            );
         }
 
         PungClient {
@@ -201,8 +237,11 @@ impl<'a> PungClient<'a> {
     }
 
     /// Register with the server and receive a client id
-    pub fn register(&mut self, scope: &gj::WaitScope, port: &mut gjio::EventPort) -> Result<u64, Error> {
-
+    pub fn register(
+        &mut self,
+        scope: &gj::WaitScope,
+        port: &mut gjio::EventPort,
+    ) -> Result<u64, Error> {
         let mut reg_request = self.conn.register_request();
         reg_request.get().set_rate(self.send_rate);
 
@@ -215,8 +254,12 @@ impl<'a> PungClient<'a> {
 
 
     // This is just to make testing and data collection easier
-    pub fn extra(&self, extra: u64, scope: &gj::WaitScope, port: &mut gjio::EventPort) -> Result<(), Error> {
-
+    pub fn extra(
+        &self,
+        extra: u64,
+        scope: &gj::WaitScope,
+        port: &mut gjio::EventPort,
+    ) -> Result<(), Error> {
         let mut extra_request = self.conn.change_extra_request();
         extra_request.get().set_extra(extra);
 
@@ -231,7 +274,6 @@ impl<'a> PungClient<'a> {
 
     /// End connection with the server.
     pub fn close(&self, scope: &gj::WaitScope, port: &mut gjio::EventPort) -> Result<(), Error> {
-
         let mut close_request = self.conn.close_request();
         close_request.get().set_id(self.id);
 
@@ -248,7 +290,6 @@ impl<'a> PungClient<'a> {
 
     /// Sync with server to obtain next available round number
     pub fn sync(&mut self, scope: &gj::WaitScope, port: &mut gjio::EventPort) -> Result<(), Error> {
-
         let mut sync_request = self.conn.sync_request();
         sync_request.get().set_id(self.id);
 
@@ -259,7 +300,9 @@ impl<'a> PungClient<'a> {
             self.round = new_round;
             Ok(())
         } else {
-            Err(Error::failed("Invalid round number returned by server".to_string()))
+            Err(Error::failed(
+                "Invalid round number returned by server".to_string(),
+            ))
         }
     }
 
@@ -273,13 +316,13 @@ impl<'a> PungClient<'a> {
     }
 
     /// Send a tuple (or set of tuples) to the server
-    pub fn send(&mut self,
-                recipient: &str,
-                msgs: &mut Vec<Vec<u8>>,
-                scope: &gj::WaitScope,
-                port: &mut gjio::EventPort)
-                -> Result<u64, Error> {
-
+    pub fn send(
+        &mut self,
+        recipient: &str,
+        msgs: &mut Vec<Vec<u8>>,
+        scope: &gj::WaitScope,
+        port: &mut gjio::EventPort,
+    ) -> Result<u64, Error> {
         if !self.peers.contains_key(&recipient) {
             return Err(Error::failed("Invalid recipient name".to_string()));
         } else if msgs.is_empty() {
@@ -297,30 +340,41 @@ impl<'a> PungClient<'a> {
             let mut measurement_byte_count = 0;
 
             for msg in msgs.drain(..) {
-
                 let (mut c, mut mac) = pcrypto::encrypt(&peer.keys.k_e[..], self.round, &msg[..]);
 
-                let mut tuple = pcrypto::gen_label(&peer.keys.k_l[..], self.round, peer.uid_peer, idx as u64, 0);
+                let mut tuple = pcrypto::gen_label(
+                    &peer.keys.k_l[..],
+                    self.round,
+                    peer.uid_peer,
+                    idx as u64,
+                    0,
+                );
 
                 // If we are using aliasing, generate an extra label
                 // and make sure it falls in a separate bucket
                 if self.opt_scheme >= db::OptScheme::Aliasing {
-
                     let bucket_idx = util::bucket_idx(&tuple, &self.partitions);
 
-                    let mut label_alias =
-                        pcrypto::gen_label(&peer.keys.k_l2[..], self.round, peer.uid_peer, idx as u64, 0);
+                    let mut label_alias = pcrypto::gen_label(
+                        &peer.keys.k_l2[..],
+                        self.round,
+                        peer.uid_peer,
+                        idx as u64,
+                        0,
+                    );
 
                     let mut bucket_alias_idx = util::bucket_idx(&label_alias, &self.partitions);
 
                     let mut collision_count = 1; // count collisions of labels to the same bucket
 
                     while bucket_idx == bucket_alias_idx {
-                        label_alias = pcrypto::gen_label(&peer.keys.k_l2[..],
-                                                         self.round,
-                                                         peer.uid_peer,
-                                                         idx as u64,
-                                                         collision_count);
+                        label_alias = pcrypto::gen_label(
+                            &peer.keys.k_l2[..],
+                            self.round,
+                            peer.uid_peer,
+                            idx as u64,
+                            collision_count,
+                        );
 
                         bucket_alias_idx = util::bucket_idx(&label_alias, &self.partitions);
                         collision_count += 1;
@@ -354,30 +408,29 @@ impl<'a> PungClient<'a> {
         assert_eq!(buckets_num.len(), self.ret_rate);
 
         if self.opt_scheme == db::OptScheme::Hybrid2 {
-
             let buckets_lmid = try!(response.get_min_labels());
             assert_eq!(buckets_num.len(), buckets_lmid.len());
 
             for i in 0..buckets_num.len() {
-
-                self.buckets
-                    .push(BucketInfo { num: buckets_num.get(i), lmid: vec![try!(buckets_lmid.get(i)).to_vec()] });
+                self.buckets.push(BucketInfo {
+                    num: buckets_num.get(i),
+                    lmid: vec![try!(buckets_lmid.get(i)).to_vec()],
+                });
 
                 total_tuples += buckets_num.get(i);
             }
 
             // This accounts for: 8 bytes (64 bits) for each bucket number entry
             // and the Lmid label
-            println!("Download (send rpc) {} bytes",
-                     (buckets_num.len() * 8) + (buckets_lmid.len() * db::LABEL_SIZE as u32));
-
+            println!(
+                "Download (send rpc) {} bytes",
+                (buckets_num.len() * 8) + (buckets_lmid.len() * db::LABEL_SIZE as u32)
+            );
         } else if self.opt_scheme == db::OptScheme::Hybrid4 {
-
             let buckets_lmid = try!(response.get_min_labels());
             assert_eq!(buckets_num.len() * 3, buckets_lmid.len()); // delimeters per bucket
 
             for i in 0..buckets_num.len() {
-
                 let mut lmid = Vec::with_capacity(3);
 
                 for j in 0..3 {
@@ -385,19 +438,25 @@ impl<'a> PungClient<'a> {
                     lmid.push(try!(buckets_lmid.get(3 * i + j)).to_vec());
                 }
 
-                self.buckets.push(BucketInfo { num: buckets_num.get(i), lmid: lmid });
+                self.buckets.push(BucketInfo {
+                    num: buckets_num.get(i),
+                    lmid: lmid,
+                });
                 total_tuples += buckets_num.get(i);
             }
 
             // This accounts for: 8 bytes (64 bits) for each bucket number entry
             // and the 3 Lmid labels per bucket
-            println!("Download (send rpc) {} bytes",
-                     (buckets_num.len() * 8) + (buckets_lmid.len() * db::LABEL_SIZE as u32));
-
+            println!(
+                "Download (send rpc) {} bytes",
+                (buckets_num.len() * 8) + (buckets_lmid.len() * db::LABEL_SIZE as u32)
+            );
         } else {
-
             for i in 0..buckets_num.len() {
-                self.buckets.push(BucketInfo { num: buckets_num.get(i), lmid: Vec::new() });
+                self.buckets.push(BucketInfo {
+                    num: buckets_num.get(i),
+                    lmid: Vec::new(),
+                });
                 total_tuples += buckets_num.get(i);
             }
 
@@ -411,8 +470,10 @@ impl<'a> PungClient<'a> {
     // Given a list of peers from whom to retrieve a message, derive the label(s) and build
     // a list of labels for each bucket. Output maps from bucket to list of (peer, label).
     // Peer object is needed to decrypt file once it has been retrieved.
-    fn schedule(&'a self, peer_names: &[&'a str]) -> Result<HashMap<usize, Vec<(&'a PungPeer, Vec<u8>)>>, Error> {
-
+    fn schedule(
+        &'a self,
+        peer_names: &[&'a str],
+    ) -> Result<HashMap<usize, Vec<(&'a PungPeer, Vec<u8>)>>, Error> {
         // bucket_id -> [(peer, label)]
         let mut bucket_map: HashMap<usize, Vec<(&'a PungPeer, Vec<u8>)>> = HashMap::new();
         // maps from peer name to which message this is (first, second, third, etc.)
@@ -420,7 +481,6 @@ impl<'a> PungClient<'a> {
 
         // Go through each peer, get labels and see to which bucket they map
         for peer_name in peer_names {
-
             if !self.peers.contains_key(peer_name) {
                 return Err(Error::failed("Invalid peer name".to_string()));
             }
@@ -432,7 +492,8 @@ impl<'a> PungClient<'a> {
             let count = peer_count.entry(peer_name).or_insert(0);
 
             // get mailbox label for this peer/count
-            let label = pcrypto::gen_label(&peer.keys.k_l[..], self.round, peer.uid_self, *count, 0);
+            let label =
+                pcrypto::gen_label(&peer.keys.k_l[..], self.round, peer.uid_self, *count, 0);
 
             // find out on which bucket this label falls
             let bucket_idx = util::bucket_idx(&label, &self.partitions);
@@ -441,19 +502,27 @@ impl<'a> PungClient<'a> {
             // If there is aliasing, derive second label too
 
             if self.opt_scheme >= db::OptScheme::Aliasing {
-
-
                 let mut collisions = 0; // Number of collisions found so far
-                let mut label_alias =
-                    pcrypto::gen_label(&peer.keys.k_l2[..], self.round, peer.uid_self, *count, collisions);
+                let mut label_alias = pcrypto::gen_label(
+                    &peer.keys.k_l2[..],
+                    self.round,
+                    peer.uid_self,
+                    *count,
+                    collisions,
+                );
                 let mut bucket_idx_alias = util::bucket_idx(&label_alias, &self.partitions);
 
                 // Derive a different label if there are collisions (must ensure labels map to
                 // different buckets)
                 while bucket_idx == bucket_idx_alias {
                     collisions += 1;
-                    label_alias =
-                        pcrypto::gen_label(&peer.keys.k_l2[..], self.round, peer.uid_self, *count, collisions);
+                    label_alias = pcrypto::gen_label(
+                        &peer.keys.k_l2[..],
+                        self.round,
+                        peer.uid_self,
+                        *count,
+                        collisions,
+                    );
                     bucket_idx_alias = util::bucket_idx(&label_alias, &self.partitions);
                 }
 
@@ -483,20 +552,20 @@ impl<'a> PungClient<'a> {
                 bucket_entry.push((peer, label));
             }
 
-            *count += 1;  // update # messages from this peer
+            *count += 1; // update # messages from this peer
         }
 
         Ok(bucket_map)
     }
 
 
-    fn next_label(&'a self,
-                  bucket_map: &mut HashMap<usize, Vec<(&'a PungPeer, Vec<u8>)>>,
-                  bucket: usize,
-                  dummy: &'a PungPeer,
-                  dummy_count: &mut u64)
-                  -> (&'a PungPeer, Vec<u8>) {
-
+    fn next_label(
+        &'a self,
+        bucket_map: &mut HashMap<usize, Vec<(&'a PungPeer, Vec<u8>)>>,
+        bucket: usize,
+        dummy: &'a PungPeer,
+        dummy_count: &mut u64,
+    ) -> (&'a PungPeer, Vec<u8>) {
         match bucket_map.remove(&bucket) {
             Some(mut v) => {
                 // this is a vector of (peer, label)
@@ -512,7 +581,13 @@ impl<'a> PungClient<'a> {
 
             None => {
                 // Request for this bucket will have to be a dummy one
-                let label = pcrypto::gen_label(&dummy.keys.k_l[..], self.round, dummy.uid_self, *dummy_count, 0);
+                let label = pcrypto::gen_label(
+                    &dummy.keys.k_l[..],
+                    self.round,
+                    dummy.uid_self,
+                    *dummy_count,
+                    0,
+                );
                 *dummy_count += 1;
                 (dummy, label)
             }
@@ -520,11 +595,11 @@ impl<'a> PungClient<'a> {
     }
 
     // Returns a map of bucket -> (collection -> [labels])
-    fn get_explicit_labels(&self,
-                           scope: &gj::WaitScope,
-                           port: &mut gjio::EventPort)
-                           -> Result<HashMap<usize, HashMap<usize, Vec<Vec<u8>>>>, Error> {
-
+    fn get_explicit_labels(
+        &self,
+        scope: &gj::WaitScope,
+        port: &mut gjio::EventPort,
+    ) -> Result<HashMap<usize, HashMap<usize, Vec<Vec<u8>>>>, Error> {
         let mut map_request = self.conn.get_mapping_request();
         map_request.get().set_round(self.round);
 
@@ -534,7 +609,9 @@ impl<'a> PungClient<'a> {
         let response = try!(map_request.send().promise.wait(scope, port));
 
         if !try!(response.get()).has_labels() {
-            return Err(Error::failed("Empty label mapping returned by server".to_string()));
+            return Err(Error::failed(
+                "Empty label mapping returned by server".to_string(),
+            ));
         }
 
         // This is a list(list(label)) = list(list([u8]))
@@ -549,11 +626,9 @@ impl<'a> PungClient<'a> {
         let mut download_measurement = 0;
 
         for bucket_idx in 0..self.buckets.len() {
-
             let bucket_map = label_map.entry(bucket_idx).or_insert_with(HashMap::new);
 
             for collection_idx in &meaningful_labels {
-
                 let collection_vec = bucket_map.entry(*collection_idx).or_insert_with(Vec::new);
 
                 // This is the returned list(label) = list([u8])
@@ -568,18 +643,21 @@ impl<'a> PungClient<'a> {
             }
         }
 
-        println!("Download (explicit label rpc) {} bytes", download_measurement);
+        println!(
+            "Download (explicit label rpc) {} bytes",
+            download_measurement
+        );
 
         Ok(label_map)
     }
 
 
     // Returns a bloom filter that encodes the labels
-    fn get_bloom_filter(&self,
-                        scope: &gj::WaitScope,
-                        port: &mut gjio::EventPort)
-                        -> Result<HashMap<usize, HashMap<usize, bloomfilter::Bloom>>, Error> {
-
+    fn get_bloom_filter(
+        &self,
+        scope: &gj::WaitScope,
+        port: &mut gjio::EventPort,
+    ) -> Result<HashMap<usize, HashMap<usize, bloomfilter::Bloom>>, Error> {
         let mut bloom_request = self.conn.get_bloom_request();
         bloom_request.get().set_round(self.round);
 
@@ -589,7 +667,9 @@ impl<'a> PungClient<'a> {
         let response = try!(bloom_request.send().promise.wait(scope, port));
 
         if !try!(response.get()).has_blooms() {
-            return Err(Error::failed("Empty bloom map returned by server".to_string()));
+            return Err(Error::failed(
+                "Empty bloom map returned by server".to_string(),
+            ));
         }
 
         // This is a list(bit_vec)
@@ -605,16 +685,17 @@ impl<'a> PungClient<'a> {
         let mut download_measurement = 0;
 
         for bucket_idx in 0..self.buckets.len() {
-
             let bucket_map = bloom_map.entry(bucket_idx).or_insert_with(HashMap::new);
             let num_tuples = self.buckets[bucket_idx].num_tuples();
 
 
             for collection_idx in &meaningful_labels {
-
                 // Number of tuples in collection
-                let t_num =
-                    util::collection_len(num_tuples, *collection_idx as u32, meaningful_labels.len() as u32);
+                let t_num = util::collection_len(
+                    num_tuples,
+                    *collection_idx as u32,
+                    meaningful_labels.len() as u32,
+                );
 
                 // This is the returned bit_vec
                 let bit_vec = try!(bit_vec_list.get(response_idx));
@@ -638,12 +719,12 @@ impl<'a> PungClient<'a> {
     }
 
     // Retrieves a message (or set of messages) form the server based on bucket_map
-    fn retr_normal(&'a self,
-                   mut bucket_map: HashMap<usize, Vec<(&'a PungPeer, Vec<u8>)>>,
-                   scope: &gj::WaitScope,
-                   port: &mut gjio::EventPort)
-                   -> Result<Vec<Vec<u8>>, Error> {
-
+    fn retr_normal(
+        &'a self,
+        mut bucket_map: HashMap<usize, Vec<(&'a PungPeer, Vec<u8>)>>,
+        scope: &gj::WaitScope,
+        port: &mut gjio::EventPort,
+    ) -> Result<Vec<Vec<u8>>, Error> {
         let retries = self.max_retries();
         let dummy = &self.peers["dummy"];
         let mut dummy_count = 0;
@@ -651,17 +732,15 @@ impl<'a> PungClient<'a> {
         let mut messages: Vec<Vec<u8>> = Vec::new();
 
         match self.ret_scheme {
-
             db::RetScheme::Explicit => {
-
                 // Get labels explicitly
                 let explicit_labels = try!(self.get_explicit_labels(scope, port));
 
                 for _ in 0..retries {
                     for bucket in 0..self.partitions.len() {
-
                         // Get next label to retrieve
-                        let (peer, label) = self.next_label(&mut bucket_map, bucket, dummy, &mut dummy_count);
+                        let (peer, label) =
+                            self.next_label(&mut bucket_map, bucket, dummy, &mut dummy_count);
 
                         // Number of elements in bucket
                         let num = self.buckets[bucket].num_tuples();
@@ -678,7 +757,12 @@ impl<'a> PungClient<'a> {
 
                         if t.label() == &label[..] {
                             // decrypt ciphertext using shared key and insert it into message list
-                            let m = try!(pcrypto::decrypt(&peer.keys.k_e[..], self.round, t.cipher(), t.mac()));
+                            let m = try!(pcrypto::decrypt(
+                                &peer.keys.k_e[..],
+                                self.round,
+                                t.cipher(),
+                                t.mac()
+                            ));
                             messages.push(m);
                         }
                     }
@@ -686,15 +770,14 @@ impl<'a> PungClient<'a> {
             }
 
             db::RetScheme::Bloom => {
-
                 // Get bloom filter
                 let bloom_filters = try!(self.get_bloom_filter(scope, port));
 
                 for _ in 0..retries {
                     for bucket in 0..self.partitions.len() {
-
                         // Get next label to retrieve
-                        let (peer, label) = self.next_label(&mut bucket_map, bucket, dummy, &mut dummy_count);
+                        let (peer, label) =
+                            self.next_label(&mut bucket_map, bucket, dummy, &mut dummy_count);
 
                         // Number of elements in bucket
                         let num = self.buckets[bucket].num_tuples();
@@ -703,14 +786,20 @@ impl<'a> PungClient<'a> {
                         let bloom = &bloom_filters[&bucket][&0];
 
                         // Get index of label if available or random otherwise
-                        let idx = some_or_random!(util::get_idx_bloom(bloom, &label, num), rng, num);
+                        let idx =
+                            some_or_random!(util::get_idx_bloom(bloom, &label, num), rng, num);
 
                         // Get a tuple using PIR to retrieve
                         let t = try!(self.pir_retr(bucket, 0, 0, idx, num, scope, port));
 
                         if t.label() == &label[..] {
                             // decrypt ciphertext using shared key and insert it into message list
-                            let m = try!(pcrypto::decrypt(&peer.keys.k_e[..], self.round, t.cipher(), t.mac()));
+                            let m = try!(pcrypto::decrypt(
+                                &peer.keys.k_e[..],
+                                self.round,
+                                t.cipher(),
+                                t.mac()
+                            ));
                             messages.push(m);
                         }
                     }
@@ -718,22 +807,27 @@ impl<'a> PungClient<'a> {
             }
 
             db::RetScheme::Tree => {
-
                 for _ in 0..retries {
                     for bucket in 0..self.partitions.len() {
-
                         // Get next label
-                        let (peer, label) = self.next_label(&mut bucket_map, bucket, dummy, &mut dummy_count);
+                        let (peer, label) =
+                            self.next_label(&mut bucket_map, bucket, dummy, &mut dummy_count);
 
                         // Number of elemnets in bucket
                         let num = self.buckets[bucket].num_tuples();
 
                         // Perform bst retrieval
-                        let result = try!(self.bst_retr(&label[..], bucket, 0, num, &mut rng, scope, port));
+                        let result =
+                            try!(self.bst_retr(&label[..], bucket, 0, num, &mut rng, scope, port));
 
                         if let Some(t) = result {
                             // decrypt ciphertext using shared key and insert it into message list
-                            let m = try!(pcrypto::decrypt(&peer.keys.k_e[..], self.round, t.cipher(), t.mac()));
+                            let m = try!(pcrypto::decrypt(
+                                &peer.keys.k_e[..],
+                                self.round,
+                                t.cipher(),
+                                t.mac()
+                            ));
                             messages.push(m);
                         }
                     }
@@ -745,12 +839,12 @@ impl<'a> PungClient<'a> {
     }
 
 
-    fn retr_hybrid2(&'a self,
-                    mut bucket_map: HashMap<usize, Vec<(&'a PungPeer, Vec<u8>)>>,
-                    scope: &gj::WaitScope,
-                    port: &mut gjio::EventPort)
-                    -> Result<Vec<Vec<u8>>, Error> {
-
+    fn retr_hybrid2(
+        &'a self,
+        mut bucket_map: HashMap<usize, Vec<(&'a PungPeer, Vec<u8>)>>,
+        scope: &gj::WaitScope,
+        port: &mut gjio::EventPort,
+    ) -> Result<Vec<Vec<u8>>, Error> {
         let retries = self.max_retries();
         let dummy = &self.peers["dummy"];
         let mut dummy_count = 0;
@@ -759,18 +853,17 @@ impl<'a> PungClient<'a> {
 
 
         match self.ret_scheme {
-
             db::RetScheme::Explicit => {
-
                 // Get labels explicitly
                 let explicit_labels = try!(self.get_explicit_labels(scope, port));
 
                 for _ in 0..retries {
                     for bucket in 0..self.partitions.len() {
-
                         // Get 2 labels to retrieve
-                        let (peer1, label1) = self.next_label(&mut bucket_map, bucket, dummy, &mut dummy_count);
-                        let (peer2, label2) = self.next_label(&mut bucket_map, bucket, dummy, &mut dummy_count);
+                        let (peer1, label1) =
+                            self.next_label(&mut bucket_map, bucket, dummy, &mut dummy_count);
+                        let (peer2, label2) =
+                            self.next_label(&mut bucket_map, bucket, dummy, &mut dummy_count);
 
                         let num = self.buckets[bucket].num_tuples();
                         let lmid = self.buckets[bucket].get_lmid(0);
@@ -794,11 +887,12 @@ impl<'a> PungClient<'a> {
 
                         // "_" stands for "greater than or equal" in this case
                         let (t1, t2) = match (cmp1, cmp2) {
-
                             // Case 1: both labels fall in collection 0
                             (Ordering::Less, Ordering::Less) => {
-                                let idx1 = some_or_random!(util::get_index(col0, &label1), rng, len0);
-                                let idx2 = some_or_random!(util::get_index(col0, &label2), rng, len0);
+                                let idx1 =
+                                    some_or_random!(util::get_index(col0, &label1), rng, len0);
+                                let idx2 =
+                                    some_or_random!(util::get_index(col0, &label2), rng, len0);
 
                                 let t1 = try!(self.pir_retr(bucket, 0, 0, idx1, len0, scope, port));
                                 let t2 = try!(self.pir_retr(bucket, 1, 0, idx2, len1, scope, port));
@@ -809,36 +903,58 @@ impl<'a> PungClient<'a> {
 
                             // Case 2: label 1 is in collection 0, and label 2 in collection 1
                             (Ordering::Less, _) => {
-                                let idx1 = some_or_random!(util::get_index(col0, &label1), rng, len0);
-                                let idx2 = some_or_random!(util::get_index(col1, &label2), rng, len1);
+                                let idx1 =
+                                    some_or_random!(util::get_index(col0, &label1), rng, len0);
+                                let idx2 =
+                                    some_or_random!(util::get_index(col1, &label2), rng, len1);
 
                                 let t1 = try!(self.pir_retr(bucket, 0, 0, idx1, len0, scope, port));
                                 let t2 = try!(self.pir_retr(bucket, 1, 0, idx2, len1, scope, port));
 
                                 // fake request
-                                try!(self.pir_retr(bucket, 2, 0, rng.next_u64() % len0, len0, scope, port));
+                                try!(self.pir_retr(
+                                    bucket,
+                                    2,
+                                    0,
+                                    rng.next_u64() % len0,
+                                    len0,
+                                    scope,
+                                    port
+                                ));
 
                                 (t1, t2)
                             }
 
                             // Case 3: label 1 is in collection 1, and label 2 in collection 0
                             (_, Ordering::Less) => {
-                                let idx1 = some_or_random!(util::get_index(col1, &label1), rng, len1);
-                                let idx2 = some_or_random!(util::get_index(col0, &label2), rng, len0);
+                                let idx1 =
+                                    some_or_random!(util::get_index(col1, &label1), rng, len1);
+                                let idx2 =
+                                    some_or_random!(util::get_index(col0, &label2), rng, len0);
 
                                 let t2 = try!(self.pir_retr(bucket, 0, 0, idx2, len0, scope, port));
                                 let t1 = try!(self.pir_retr(bucket, 1, 0, idx1, len1, scope, port));
 
                                 // fake request
-                                try!(self.pir_retr(bucket, 2, 0, rng.next_u64() % len0, len0, scope, port));
+                                try!(self.pir_retr(
+                                    bucket,
+                                    2,
+                                    0,
+                                    rng.next_u64() % len0,
+                                    len0,
+                                    scope,
+                                    port
+                                ));
 
                                 (t1, t2)
                             }
 
                             // Case 4: both labels fall in collection 1
                             (_, _) => {
-                                let idx1 = some_or_random!(util::get_index(col1, &label1), rng, len1);
-                                let idx2 = some_or_random!(util::get_index(col1, &label2), rng, len1);
+                                let idx1 =
+                                    some_or_random!(util::get_index(col1, &label1), rng, len1);
+                                let idx2 =
+                                    some_or_random!(util::get_index(col1, &label2), rng, len1);
 
                                 let t1 = try!(self.pir_retr(bucket, 0, 0, idx1, len0, scope, port));
                                 let t2 = try!(self.pir_retr(bucket, 1, 0, idx2, len1, scope, port));
@@ -850,13 +966,23 @@ impl<'a> PungClient<'a> {
 
                         if t1.label() == &label1[..] {
                             // decrypt ciphertext using shared key and insert it into message list
-                            let m = try!(pcrypto::decrypt(&peer1.keys.k_e[..], self.round, t1.cipher(), t1.mac()));
+                            let m = try!(pcrypto::decrypt(
+                                &peer1.keys.k_e[..],
+                                self.round,
+                                t1.cipher(),
+                                t1.mac()
+                            ));
                             messages.push(m);
                         }
 
                         if t2.label() == &label2[..] {
                             // decrypt ciphertext using shared key and insert it into message list
-                            let m = try!(pcrypto::decrypt(&peer2.keys.k_e[..], self.round, t2.cipher(), t2.mac()));
+                            let m = try!(pcrypto::decrypt(
+                                &peer2.keys.k_e[..],
+                                self.round,
+                                t2.cipher(),
+                                t2.mac()
+                            ));
                             messages.push(m);
                         }
                     }
@@ -864,16 +990,16 @@ impl<'a> PungClient<'a> {
             }
 
             db::RetScheme::Bloom => {
-
                 // Get bloom filters
                 let bloom_filters = try!(self.get_bloom_filter(scope, port));
 
                 for _ in 0..retries {
                     for bucket in 0..self.partitions.len() {
-
                         // Get 2 labels to retrieve
-                        let (peer1, label1) = self.next_label(&mut bucket_map, bucket, dummy, &mut dummy_count);
-                        let (peer2, label2) = self.next_label(&mut bucket_map, bucket, dummy, &mut dummy_count);
+                        let (peer1, label1) =
+                            self.next_label(&mut bucket_map, bucket, dummy, &mut dummy_count);
+                        let (peer2, label2) =
+                            self.next_label(&mut bucket_map, bucket, dummy, &mut dummy_count);
 
                         let num = self.buckets[bucket].num_tuples();
                         let lmid = self.buckets[bucket].get_lmid(0);
@@ -894,11 +1020,18 @@ impl<'a> PungClient<'a> {
 
                         // "_" stands for "greater than or equal" in this case
                         let (t1, t2) = match (cmp1, cmp2) {
-
                             // Case 1: both labels fall in collection 0
                             (Ordering::Less, Ordering::Less) => {
-                                let idx1 = some_or_random!(util::get_idx_bloom(b0, &label1, len0), rng, len0);
-                                let idx2 = some_or_random!(util::get_idx_bloom(b0, &label2, len0), rng, len0);
+                                let idx1 = some_or_random!(
+                                    util::get_idx_bloom(b0, &label1, len0),
+                                    rng,
+                                    len0
+                                );
+                                let idx2 = some_or_random!(
+                                    util::get_idx_bloom(b0, &label2, len0),
+                                    rng,
+                                    len0
+                                );
 
                                 let t1 = try!(self.pir_retr(bucket, 0, 0, idx1, len0, scope, port));
                                 let t2 = try!(self.pir_retr(bucket, 1, 0, idx2, len1, scope, port));
@@ -909,36 +1042,76 @@ impl<'a> PungClient<'a> {
 
                             // Case 2: label 1 is in collection 0, and label 2 in collection 1
                             (Ordering::Less, _) => {
-                                let idx1 = some_or_random!(util::get_idx_bloom(b0, &label1, len0), rng, len0);
-                                let idx2 = some_or_random!(util::get_idx_bloom(b1, &label2, len1), rng, len1);
+                                let idx1 = some_or_random!(
+                                    util::get_idx_bloom(b0, &label1, len0),
+                                    rng,
+                                    len0
+                                );
+                                let idx2 = some_or_random!(
+                                    util::get_idx_bloom(b1, &label2, len1),
+                                    rng,
+                                    len1
+                                );
 
                                 let t1 = try!(self.pir_retr(bucket, 0, 0, idx1, len0, scope, port));
                                 let t2 = try!(self.pir_retr(bucket, 1, 0, idx2, len1, scope, port));
 
                                 // fake request
-                                try!(self.pir_retr(bucket, 2, 0, rng.next_u64() % len0, len0, scope, port));
+                                try!(self.pir_retr(
+                                    bucket,
+                                    2,
+                                    0,
+                                    rng.next_u64() % len0,
+                                    len0,
+                                    scope,
+                                    port
+                                ));
 
                                 (t1, t2)
                             }
 
                             // Case 3: label 1 is in collection 1, and label 2 in collection 0
                             (_, Ordering::Less) => {
-                                let idx1 = some_or_random!(util::get_idx_bloom(b1, &label1, len1), rng, len1);
-                                let idx2 = some_or_random!(util::get_idx_bloom(b0, &label2, len0), rng, len0);
+                                let idx1 = some_or_random!(
+                                    util::get_idx_bloom(b1, &label1, len1),
+                                    rng,
+                                    len1
+                                );
+                                let idx2 = some_or_random!(
+                                    util::get_idx_bloom(b0, &label2, len0),
+                                    rng,
+                                    len0
+                                );
 
                                 let t2 = try!(self.pir_retr(bucket, 0, 0, idx2, len0, scope, port));
                                 let t1 = try!(self.pir_retr(bucket, 1, 0, idx1, len1, scope, port));
 
                                 // fake request
-                                try!(self.pir_retr(bucket, 2, 0, rng.next_u64() % len0, len0, scope, port));
+                                try!(self.pir_retr(
+                                    bucket,
+                                    2,
+                                    0,
+                                    rng.next_u64() % len0,
+                                    len0,
+                                    scope,
+                                    port
+                                ));
 
                                 (t1, t2)
                             }
 
                             // Case 4: both labels fall in collection 1
                             (_, _) => {
-                                let idx1 = some_or_random!(util::get_idx_bloom(b1, &label1, len1), rng, len1);
-                                let idx2 = some_or_random!(util::get_idx_bloom(b1, &label2, len1), rng, len1);
+                                let idx1 = some_or_random!(
+                                    util::get_idx_bloom(b1, &label1, len1),
+                                    rng,
+                                    len1
+                                );
+                                let idx2 = some_or_random!(
+                                    util::get_idx_bloom(b1, &label2, len1),
+                                    rng,
+                                    len1
+                                );
 
                                 let t1 = try!(self.pir_retr(bucket, 0, 0, idx1, len0, scope, port));
                                 let t2 = try!(self.pir_retr(bucket, 1, 0, idx2, len1, scope, port));
@@ -950,13 +1123,23 @@ impl<'a> PungClient<'a> {
 
                         if t1.label() == &label1[..] {
                             // decrypt ciphertext using shared key and insert it into message list
-                            let m = try!(pcrypto::decrypt(&peer1.keys.k_e[..], self.round, t1.cipher(), t1.mac()));
+                            let m = try!(pcrypto::decrypt(
+                                &peer1.keys.k_e[..],
+                                self.round,
+                                t1.cipher(),
+                                t1.mac()
+                            ));
                             messages.push(m);
                         }
 
                         if t2.label() == &label2[..] {
                             // decrypt ciphertext using shared key and insert it into message list
-                            let m = try!(pcrypto::decrypt(&peer2.keys.k_e[..], self.round, t2.cipher(), t2.mac()));
+                            let m = try!(pcrypto::decrypt(
+                                &peer2.keys.k_e[..],
+                                self.round,
+                                t2.cipher(),
+                                t2.mac()
+                            ));
                             messages.push(m);
                         }
                     }
@@ -964,13 +1147,13 @@ impl<'a> PungClient<'a> {
             }
 
             db::RetScheme::Tree => {
-
                 for _ in 0..retries {
                     for bucket in 0..self.partitions.len() {
-
                         // Get 2 labels to retrieve
-                        let (peer1, label1) = self.next_label(&mut bucket_map, bucket, dummy, &mut dummy_count);
-                        let (peer2, label2) = self.next_label(&mut bucket_map, bucket, dummy, &mut dummy_count);
+                        let (peer1, label1) =
+                            self.next_label(&mut bucket_map, bucket, dummy, &mut dummy_count);
+                        let (peer2, label2) =
+                            self.next_label(&mut bucket_map, bucket, dummy, &mut dummy_count);
 
                         // Number of tuples and lowest level in collection 1 (lmid)
                         let num = self.buckets[bucket].num_tuples();
@@ -987,34 +1170,73 @@ impl<'a> PungClient<'a> {
 
                         // "_" stands for ">="
                         let (t1, t2) = match (cmp1, cmp2) {
-
                             // Case 1: both labels fall in collection 0
                             (Ordering::Less, Ordering::Less) => {
-
-                                let t1 = try!(self.bst_retr(&label1[..], bucket, 0, len0, &mut rng, scope, port));
+                                let t1 = try!(self.bst_retr(
+                                    &label1[..],
+                                    bucket,
+                                    0,
+                                    len0,
+                                    &mut rng,
+                                    scope,
+                                    port
+                                ));
 
                                 let t2 = try!(self.bst_joint_retr(
-                                        &label2[..], bucket, 1, len1, len0, &mut rng, scope, port));
+                                    &label2[..],
+                                    bucket,
+                                    1,
+                                    len1,
+                                    len0,
+                                    &mut rng,
+                                    scope,
+                                    port
+                                ));
 
                                 (t1, t2)
                             }
 
                             // Case 2: label 1 is in collection 0, and label 2 in collection 1
                             (Ordering::Less, _) => {
+                                let t1 = try!(self.bst_retr(
+                                    &label1[..],
+                                    bucket,
+                                    0,
+                                    len0,
+                                    &mut rng,
+                                    scope,
+                                    port
+                                ));
 
-                                let t1 = try!(self.bst_retr(&label1[..], bucket, 0, len0, &mut rng, scope, port));
-
-                                let t2 = try!(self.bst_retr(&label2[..], bucket, 1, len1, &mut rng, scope, port));
+                                let t2 = try!(self.bst_retr(
+                                    &label2[..],
+                                    bucket,
+                                    1,
+                                    len1,
+                                    &mut rng,
+                                    scope,
+                                    port
+                                ));
 
                                 // Generate dummy label
-                                let dummy = pcrypto::gen_label(&dummy.keys.k_l[..],
-                                                               self.round,
-                                                               dummy.uid_self,
-                                                               dummy_count,
-                                                               0);
+                                let dummy = pcrypto::gen_label(
+                                    &dummy.keys.k_l[..],
+                                    self.round,
+                                    dummy.uid_self,
+                                    dummy_count,
+                                    0,
+                                );
                                 dummy_count += 1;
 
-                                try!(self.bst_retr(&dummy[..], bucket, 2, len0, &mut rng, scope, port));
+                                try!(self.bst_retr(
+                                    &dummy[..],
+                                    bucket,
+                                    2,
+                                    len0,
+                                    &mut rng,
+                                    scope,
+                                    port
+                                ));
 
 
                                 (t1, t2)
@@ -1022,20 +1244,45 @@ impl<'a> PungClient<'a> {
 
                             // Case 3: label 1 is in collection 1, and label 2 in collection 0
                             (_, Ordering::Less) => {
+                                let t2 = try!(self.bst_retr(
+                                    &label2[..],
+                                    bucket,
+                                    0,
+                                    len0,
+                                    &mut rng,
+                                    scope,
+                                    port
+                                ));
 
-                                let t2 = try!(self.bst_retr(&label2[..], bucket, 0, len0, &mut rng, scope, port));
-
-                                let t1 = try!(self.bst_retr(&label1[..], bucket, 1, len1, &mut rng, scope, port));
+                                let t1 = try!(self.bst_retr(
+                                    &label1[..],
+                                    bucket,
+                                    1,
+                                    len1,
+                                    &mut rng,
+                                    scope,
+                                    port
+                                ));
 
                                 // Generate dummy label
-                                let dummy = pcrypto::gen_label(&dummy.keys.k_l[..],
-                                                               self.round,
-                                                               dummy.uid_self,
-                                                               dummy_count,
-                                                               0);
+                                let dummy = pcrypto::gen_label(
+                                    &dummy.keys.k_l[..],
+                                    self.round,
+                                    dummy.uid_self,
+                                    dummy_count,
+                                    0,
+                                );
                                 dummy_count += 1;
 
-                                try!(self.bst_retr(&dummy[..], bucket, 2, len0, &mut rng, scope, port));
+                                try!(self.bst_retr(
+                                    &dummy[..],
+                                    bucket,
+                                    2,
+                                    len0,
+                                    &mut rng,
+                                    scope,
+                                    port
+                                ));
 
                                 (t1, t2)
                             }
@@ -1048,11 +1295,26 @@ impl<'a> PungClient<'a> {
                             // This leads to slightly more gross code.
                             // Performance-wise this should be no different though.
                             (_, _) => {
-
                                 let t2 = try!(self.bst_joint_retr(
-                                        &label2[..], bucket, 0, len0, len0, &mut rng, scope, port));
+                                    &label2[..],
+                                    bucket,
+                                    0,
+                                    len0,
+                                    len0,
+                                    &mut rng,
+                                    scope,
+                                    port
+                                ));
 
-                                let t1 = try!(self.bst_retr(&label1[..], bucket, 1, len1, &mut rng, scope, port));
+                                let t1 = try!(self.bst_retr(
+                                    &label1[..],
+                                    bucket,
+                                    1,
+                                    len1,
+                                    &mut rng,
+                                    scope,
+                                    port
+                                ));
 
                                 (t1, t2)
                             }
@@ -1060,18 +1322,27 @@ impl<'a> PungClient<'a> {
 
                         if let Some(t) = t1 {
                             // decrypt ciphertext 1 using shared key and insert it into message list
-                            let m = try!(pcrypto::decrypt(&peer1.keys.k_e[..], self.round, t.cipher(), t.mac()));
+                            let m = try!(pcrypto::decrypt(
+                                &peer1.keys.k_e[..],
+                                self.round,
+                                t.cipher(),
+                                t.mac()
+                            ));
                             messages.push(m);
                         }
 
                         if let Some(t) = t2 {
                             // decrypt ciphertext 2 using shared key and insert it into message list
-                            let m = try!(pcrypto::decrypt(&peer2.keys.k_e[..], self.round, t.cipher(), t.mac()));
+                            let m = try!(pcrypto::decrypt(
+                                &peer2.keys.k_e[..],
+                                self.round,
+                                t.cipher(),
+                                t.mac()
+                            ));
                             messages.push(m);
                         }
                     }
                 }
-
             }
         }
 
@@ -1079,12 +1350,12 @@ impl<'a> PungClient<'a> {
     }
 
 
-    fn retr_hybrid4(&'a self,
-                    mut bucket_map: HashMap<usize, Vec<(&'a PungPeer, Vec<u8>)>>,
-                    scope: &gj::WaitScope,
-                    port: &mut gjio::EventPort)
-                    -> Result<Vec<Vec<u8>>, Error> {
-
+    fn retr_hybrid4(
+        &'a self,
+        mut bucket_map: HashMap<usize, Vec<(&'a PungPeer, Vec<u8>)>>,
+        scope: &gj::WaitScope,
+        port: &mut gjio::EventPort,
+    ) -> Result<Vec<Vec<u8>>, Error> {
         let dummy = &self.peers["dummy"];
         let mut dummy_count = 0;
         let mut rng = rand::ChaChaRng::new_unseeded();
@@ -1092,7 +1363,6 @@ impl<'a> PungClient<'a> {
 
 
         match self.ret_scheme {
-
             // XXX: The function below probes all collections (as it should) but it does
             // so in an order that is dependent on the labels of interest to the user.
             // This can likely leak information. The solution is to retrieve from the collections
@@ -1100,27 +1370,44 @@ impl<'a> PungClient<'a> {
             // However, that requires much grosser looking code and its performance is the same
             // as the scheme below. We leave it to be fixed later.
             db::RetScheme::Explicit => {
-
                 // Get labels explicitly
                 let explicit_labels = try!(self.get_explicit_labels(scope, port));
 
                 for bucket in 0..self.partitions.len() {
-
                     // Available collections
                     let mut available: HashSet<usize> = (0..9).collect();
 
                     // Get 4 (peer, label) to retrieve
                     let mut label_list = Vec::with_capacity(4);
-                    label_list.push(self.next_label(&mut bucket_map, bucket, dummy, &mut dummy_count));
-                    label_list.push(self.next_label(&mut bucket_map, bucket, dummy, &mut dummy_count));
-                    label_list.push(self.next_label(&mut bucket_map, bucket, dummy, &mut dummy_count));
-                    label_list.push(self.next_label(&mut bucket_map, bucket, dummy, &mut dummy_count));
+                    label_list.push(self.next_label(
+                        &mut bucket_map,
+                        bucket,
+                        dummy,
+                        &mut dummy_count,
+                    ));
+                    label_list.push(self.next_label(
+                        &mut bucket_map,
+                        bucket,
+                        dummy,
+                        &mut dummy_count,
+                    ));
+                    label_list.push(self.next_label(
+                        &mut bucket_map,
+                        bucket,
+                        dummy,
+                        &mut dummy_count,
+                    ));
+                    label_list.push(self.next_label(
+                        &mut bucket_map,
+                        bucket,
+                        dummy,
+                        &mut dummy_count,
+                    ));
 
                     let lmids = self.buckets[bucket].get_lmids();
                     let bucket_labels = &explicit_labels[&bucket];
 
                     for &(peer, ref label) in &label_list {
-
                         let mut c_i = 3; // last collection
 
                         // Find out in which of the systematic collections does this label fall
@@ -1134,10 +1421,13 @@ impl<'a> PungClient<'a> {
 
                         // Get labels and index of tuple in the target collection (0, 1, 2 or 3)
                         let c_labels = bucket_labels.get(&c_i).unwrap();
-                        let idx = some_or_random!(util::get_index(c_labels, &label), rng, c_labels.len() as u64);
+                        let idx = some_or_random!(
+                            util::get_index(c_labels, &label),
+                            rng,
+                            c_labels.len() as u64
+                        );
 
                         for parts in &self.h4_mappings[&c_i] {
-
                             let res = available.is_superset(parts);
 
                             if res {
@@ -1146,7 +1436,6 @@ impl<'a> PungClient<'a> {
                                 let mut tuple = db::PungTuple::default();
 
                                 for part in parts {
-
                                     // Remove parts from available set
                                     available.remove(part);
 
@@ -1164,15 +1453,25 @@ impl<'a> PungClient<'a> {
                                     assert!(idx < len);
 
                                     // Create the tuple by requesting parts and XORING them together
-                                    tuple ^= try!(self.pir_retr(bucket, *part as u32, 0, idx, len, scope, port));
+                                    tuple ^= try!(self.pir_retr(
+                                        bucket,
+                                        *part as u32,
+                                        0,
+                                        idx,
+                                        len,
+                                        scope,
+                                        port
+                                    ));
                                 }
 
                                 if tuple.label() == &label[..] {
-                                    // decrypt ciphertext using shared key and insert it into message list
-                                    let m = try!(pcrypto::decrypt(&peer.keys.k_e[..],
-                                                                  self.round,
-                                                                  tuple.cipher(),
-                                                                  tuple.mac()));
+                                    //decrypt using shared key and insert into message list
+                                    let m = try!(pcrypto::decrypt(
+                                        &peer.keys.k_e[..],
+                                        self.round,
+                                        tuple.cipher(),
+                                        tuple.mac()
+                                    ));
                                     messages.push(m);
                                 }
 
@@ -1184,7 +1483,6 @@ impl<'a> PungClient<'a> {
 
                     // Once all labels have been retrieved, retrieve from the remaining collections
                     for part in &available {
-
                         let len = if *part == 4 || *part == 6 || *part == 8 {
                             bucket_labels.get(&0).unwrap().len() as u64
                         } else if *part == 5 {
@@ -1200,7 +1498,6 @@ impl<'a> PungClient<'a> {
                         try!(self.pir_retr(bucket, *part as u32, 0, idx, len, scope, port));
                     }
                 }
-
             }
 
             // XXX: The function below probes all collections (as it should) but it does
@@ -1210,28 +1507,45 @@ impl<'a> PungClient<'a> {
             // However, that requires much grosser looking code and its performance is the same
             // as the scheme below. We leave it to be fixed later.
             db::RetScheme::Bloom => {
-
                 // Get labels explicitly
                 let bloom_filters = try!(self.get_bloom_filter(scope, port));
 
                 for bucket in 0..self.partitions.len() {
-
                     // Available collections
                     let mut available: HashSet<usize> = (0..9).collect();
 
                     // Get 4 (peer, label) to retrieve
                     let mut label_list = Vec::with_capacity(4);
-                    label_list.push(self.next_label(&mut bucket_map, bucket, dummy, &mut dummy_count));
-                    label_list.push(self.next_label(&mut bucket_map, bucket, dummy, &mut dummy_count));
-                    label_list.push(self.next_label(&mut bucket_map, bucket, dummy, &mut dummy_count));
-                    label_list.push(self.next_label(&mut bucket_map, bucket, dummy, &mut dummy_count));
+                    label_list.push(self.next_label(
+                        &mut bucket_map,
+                        bucket,
+                        dummy,
+                        &mut dummy_count,
+                    ));
+                    label_list.push(self.next_label(
+                        &mut bucket_map,
+                        bucket,
+                        dummy,
+                        &mut dummy_count,
+                    ));
+                    label_list.push(self.next_label(
+                        &mut bucket_map,
+                        bucket,
+                        dummy,
+                        &mut dummy_count,
+                    ));
+                    label_list.push(self.next_label(
+                        &mut bucket_map,
+                        bucket,
+                        dummy,
+                        &mut dummy_count,
+                    ));
 
                     let lmids = self.buckets[bucket].get_lmids();
                     let bucket_blooms = &bloom_filters[&bucket];
                     let num = self.buckets[bucket].num_tuples();
 
                     for &(peer, ref label) in &label_list {
-
                         let mut c_i = 3; // last collection
 
                         // Find out in which of the systematic collections does this label fall
@@ -1246,10 +1560,13 @@ impl<'a> PungClient<'a> {
                         // Get labels and index of tuple in the target collection (0, 1, 2 or 3)
                         let c_num = util::collection_len(num, c_i as u32, 4);
                         let c_bloom = bucket_blooms.get(&c_i).unwrap();
-                        let idx = some_or_random!(util::get_idx_bloom(c_bloom, &label, c_num), rng, c_num);
+                        let idx = some_or_random!(
+                            util::get_idx_bloom(c_bloom, &label, c_num),
+                            rng,
+                            c_num
+                        );
 
                         for parts in &self.h4_mappings[&c_i] {
-
                             let res = available.is_superset(parts);
 
                             if res {
@@ -1258,7 +1575,6 @@ impl<'a> PungClient<'a> {
                                 let mut tuple = db::PungTuple::default();
 
                                 for part in parts {
-
                                     // Remove parts from available set
                                     available.remove(part);
 
@@ -1279,20 +1595,37 @@ impl<'a> PungClient<'a> {
                                     // Just fetch anything from this part and ignore the result
                                     if idx == len {
                                         let tmp_idx = rng.next_u64() % (len as u64);
-                                        try!(self.pir_retr(bucket, *part as u32, 0, tmp_idx, len, scope, port));
+                                        try!(self.pir_retr(
+                                            bucket,
+                                            *part as u32,
+                                            0,
+                                            tmp_idx,
+                                            len,
+                                            scope,
+                                            port
+                                        ));
                                     } else {
-                                        // Create the tuple by requesting the part and XORING it to prior parts
+                                        //Create tuple by requesting part and XORING to prior parts
                                         tuple ^= try!(self.pir_retr(
-                                                    bucket, *part as u32, 0, idx, len, scope, port));
+                                            bucket,
+                                            *part as u32,
+                                            0,
+                                            idx,
+                                            len,
+                                            scope,
+                                            port
+                                        ));
                                     }
                                 }
 
                                 if tuple.label() == &label[..] {
-                                    // decrypt ciphertext using shared key and insert it into message list
-                                    let m = try!(pcrypto::decrypt(&peer.keys.k_e[..],
-                                                                  self.round,
-                                                                  tuple.cipher(),
-                                                                  tuple.mac()));
+                                    // decrypt using shared key and insert into message list
+                                    let m = try!(pcrypto::decrypt(
+                                        &peer.keys.k_e[..],
+                                        self.round,
+                                        tuple.cipher(),
+                                        tuple.mac()
+                                    ));
                                     messages.push(m);
                                 }
 
@@ -1304,7 +1637,6 @@ impl<'a> PungClient<'a> {
 
                     // Once all labels have been retrieved, retrieve from the remaining collections
                     for part in &available {
-
                         let len = if *part == 4 || *part == 6 || *part == 8 {
                             util::collection_len(num, 0, 4)
                         } else if *part == 5 {
@@ -1320,13 +1652,11 @@ impl<'a> PungClient<'a> {
                         try!(self.pir_retr(bucket, *part as u32, 0, idx, len, scope, port));
                     }
                 }
-
             }
 
             // TODO, FIXME: Previous implementation was horribly inefficient and leaked information.
             // A re-write is work in progress.
             db::RetScheme::Tree => unimplemented!(),
-
         }
 
         Ok(messages)
@@ -1335,20 +1665,21 @@ impl<'a> PungClient<'a> {
 
 
     // Retrieves a tuple from the server given a bucket, collection, level, and index
-    fn pir_retr(&self,
-                bucket: usize,
-                collection: u32,
-                level: u32,
-                idx: u64,
-                len: u64,
-                scope: &gj::WaitScope,
-                port: &mut gjio::EventPort)
-                -> Result<db::PungTuple, Error> {
-
+    fn pir_retr(
+        &self,
+        bucket: usize,
+        collection: u32,
+        level: u32,
+        idx: u64,
+        len: u64,
+        scope: &gj::WaitScope,
+        port: &mut gjio::EventPort,
+    ) -> Result<db::PungTuple, Error> {
         // set up PIR handler
         // compute ideal alpha
         let alpha = util::get_alpha(len);
-        self.pir_handler.update_params(db::TUPLE_SIZE as u64, len, alpha);
+        self.pir_handler
+            .update_params(db::TUPLE_SIZE as u64, len, alpha);
 
         // Create PIR request
         let query = self.pir_handler.gen_query(idx);
@@ -1383,16 +1714,16 @@ impl<'a> PungClient<'a> {
     }
 
     // Retrieves a tuple using only a label by searching on the server
-    fn bst_retr(&self,
-                label: &[u8],
-                bucket: usize,
-                collection: u32,
-                num: u64,
-                rng: &mut rand::ChaChaRng,
-                scope: &gj::WaitScope,
-                port: &mut gjio::EventPort)
-                -> Result<Option<db::PungTuple>, Error> {
-
+    fn bst_retr(
+        &self,
+        label: &[u8],
+        bucket: usize,
+        collection: u32,
+        num: u64,
+        rng: &mut rand::ChaChaRng,
+        scope: &gj::WaitScope,
+        port: &mut gjio::EventPort,
+    ) -> Result<Option<db::PungTuple>, Error> {
         let tree_height = util::tree_height(num);
         let mut idx = 0; // first index is 0
         let mut len = 1; // first level has 1 entry
@@ -1400,7 +1731,6 @@ impl<'a> PungClient<'a> {
 
         // Request level by level
         for h in 0..tree_height {
-
             let tuple = try!(self.pir_retr(bucket, collection, h, idx, len, scope, port));
 
             if result.is_none() {
@@ -1431,17 +1761,17 @@ impl<'a> PungClient<'a> {
     }
 
 
-    fn bst_joint_retr(&self,
-                      label: &[u8],
-                      bucket: usize,
-                      collection: u32,
-                      num: u64,
-                      num2: u64, // num of items in collection 2
-                      rng: &mut rand::ChaChaRng,
-                      scope: &gj::WaitScope,
-                      port: &mut gjio::EventPort)
-                      -> Result<Option<db::PungTuple>, Error> {
-
+    fn bst_joint_retr(
+        &self,
+        label: &[u8],
+        bucket: usize,
+        collection: u32,
+        num: u64,
+        num2: u64, // num of items in collection 2
+        rng: &mut rand::ChaChaRng,
+        scope: &gj::WaitScope,
+        port: &mut gjio::EventPort,
+    ) -> Result<Option<db::PungTuple>, Error> {
         assert!(num2 == num || num2 == num + 1);
 
         let tree_height = util::tree_height(num);
@@ -1453,7 +1783,6 @@ impl<'a> PungClient<'a> {
 
         // Request level by level
         for h in 0..tree_height - 1 {
-
             let t1 = try!(self.pir_retr(bucket, collection, h, idx, len, scope, port));
             let t2 = try!(self.pir_retr(bucket, 2, h, idx, len, scope, port));
 
@@ -1485,7 +1814,6 @@ impl<'a> PungClient<'a> {
 
         // Case 1 and 2: both collections have the same number of elements on all shared levels
         if num == num2 || tree_height < tree_height2 {
-
             if idx >= len || result.is_some() {
                 idx = rng.next_u64() % len;
             }
@@ -1515,9 +1843,8 @@ impl<'a> PungClient<'a> {
                 }
             }
 
-            // Case 3: collections differ in 1 element on a shared level
+        // Case 3: collections differ in 1 element on a shared level
         } else {
-
             let mut idx2 = idx;
             let len2 = len + 1;
 
@@ -1533,7 +1860,6 @@ impl<'a> PungClient<'a> {
             let t2 = try!(self.pir_retr(bucket, 2, h, idx2, len2, scope, port));
 
             if result.is_none() {
-
                 // If the same node was not fetched, then just use t2. Otherwise use combination
                 let tuple = if idx != idx2 { t2 } else { &t1 ^ &t2 };
 
@@ -1541,19 +1867,17 @@ impl<'a> PungClient<'a> {
                     result = Some(tuple);
                 }
             }
-
         }
 
         Ok(result)
     }
 
-    pub fn retr(&self,
-                peer_names: &[&str],
-                scope: &gj::WaitScope,
-                port: &mut gjio::EventPort)
-                -> Result<Vec<Vec<u8>>, Error> {
-
-
+    pub fn retr(
+        &self,
+        peer_names: &[&str],
+        scope: &gj::WaitScope,
+        port: &mut gjio::EventPort,
+    ) -> Result<Vec<Vec<u8>>, Error> {
         if peer_names.len() as u32 > self.ret_rate {
             return Err(Error::failed("Number of peers exceeds rate".to_string()));
         }
@@ -1561,7 +1885,9 @@ impl<'a> PungClient<'a> {
         let bucket_map = try!(self.schedule(peer_names));
 
         match self.opt_scheme {
-            db::OptScheme::Normal | db::OptScheme::Aliasing => self.retr_normal(bucket_map, scope, port),
+            db::OptScheme::Normal | db::OptScheme::Aliasing => {
+                self.retr_normal(bucket_map, scope, port)
+            }
             db::OptScheme::Hybrid2 => self.retr_hybrid2(bucket_map, scope, port),
             db::OptScheme::Hybrid4 => self.retr_hybrid4(bucket_map, scope, port),
         }

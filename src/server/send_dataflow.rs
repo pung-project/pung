@@ -12,8 +12,11 @@ use timely::dataflow::scopes::root::Root;
 use timely_communication::allocator::generic::Generic;
 use util;
 
-pub fn graph(worker: &mut Root<Generic>, dbase: db::DatabasePtr, buckets: usize) -> timely_shim::SendHandler {
-
+pub fn graph(
+    worker: &mut Root<Generic>,
+    dbase: db::DatabasePtr,
+    buckets: usize,
+) -> timely_shim::SendHandler {
     let fulfillers: timely_shim::SendFulfillerList = Rc::new(RefCell::new(Vec::new()));
     let send_fulfillers = fulfillers.clone();
 
@@ -24,7 +27,6 @@ pub fn graph(worker: &mut Root<Generic>, dbase: db::DatabasePtr, buckets: usize)
     }
 
     let (input, probe) = worker.dataflow(move |dataflow| {
-
         // Get input from RPCs
         let (s_input, stream) = dataflow.new_input::<db::PungTuple>();
 
@@ -90,5 +92,9 @@ pub fn graph(worker: &mut Root<Generic>, dbase: db::DatabasePtr, buckets: usize)
         (s_input, s_probe)
     });
 
-    timely_shim::SendHandler { input: input, probe: probe, fulfillers: fulfillers }
+    timely_shim::SendHandler {
+        input: input,
+        probe: probe,
+        fulfillers: fulfillers,
+    }
 }

@@ -4,7 +4,7 @@ use std::io::Write;
 use std::ops::BitXor;
 use std::ops::BitXorAssign;
 
-use super::{CIPHER_SIZE, LABEL_SIZE, PungTuple, TUPLE_SIZE};
+use super::{PungTuple, CIPHER_SIZE, LABEL_SIZE, TUPLE_SIZE};
 use util;
 
 impl PungTuple {
@@ -22,7 +22,9 @@ impl PungTuple {
     }
 
     pub fn default() -> PungTuple {
-        PungTuple { data: [0; TUPLE_SIZE] }
+        PungTuple {
+            data: [0; TUPLE_SIZE],
+        }
     }
 
     /// Serializes a Pung tuple to a binary stream (Vec<u8>).
@@ -38,7 +40,8 @@ impl PungTuple {
     #[inline]
     pub fn lt(&self, label: &[u8]) -> bool {
         unsafe {
-            (&*(self.label() as *const [u8] as *const [u64; 4])) < (&*(label as *const [u8] as *const [u64; 4]))
+            (&*(self.label() as *const [u8] as *const [u64; 4]))
+                < (&*(label as *const [u8] as *const [u64; 4]))
         }
     }
 
@@ -48,7 +51,8 @@ impl PungTuple {
     #[inline]
     pub fn gt(&self, label: &[u8]) -> bool {
         unsafe {
-            (&*(self.label() as *const [u8] as *const [u64; 4])) > (&*(label as *const [u8] as *const [u64; 4]))
+            (&*(self.label() as *const [u8] as *const [u64; 4]))
+                > (&*(label as *const [u8] as *const [u64; 4]))
         }
     }
 
@@ -141,15 +145,12 @@ impl Abomonation for PungTuple {
 
     #[inline]
     unsafe fn exhume<'a, 'b>(&'a mut self, mut bytes: &'b mut [u8]) -> Option<&'b mut [u8]> {
-
         let temp = bytes;
 
         bytes = if TUPLE_SIZE <= temp.len() {
-
             let (mine, rest) = temp.split_at_mut(TUPLE_SIZE);
             self.data = *(mine.as_ptr() as *const [u8; TUPLE_SIZE]);
             rest
-
         } else {
             return None;
         };

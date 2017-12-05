@@ -39,7 +39,9 @@ macro_rules! some_or_random {
 // Below is unsafe
 #[inline]
 pub fn label_cmp(l1: &[u8], l2: &[u8]) -> cmp::Ordering {
-    unsafe { (&*(l1 as *const [u8] as *const [u64; 4])).cmp(&*(l2 as *const [u8] as *const [u64; 4])) }
+    unsafe {
+        (&*(l1 as *const [u8] as *const [u64; 4])).cmp(&*(l2 as *const [u8] as *const [u64; 4]))
+    }
 }
 
 
@@ -50,7 +52,6 @@ pub fn tree_height(num: u64) -> u32 {
 
 #[inline]
 pub fn get_index(labels: &[Vec<u8>], label: &[u8]) -> Option<u64> {
-
     match labels.binary_search_by(|probe| label_cmp(&probe[..], label)) {
         Ok(i) => Some(i as u64),
         Err(_) => None,
@@ -60,7 +61,6 @@ pub fn get_index(labels: &[Vec<u8>], label: &[u8]) -> Option<u64> {
 
 #[inline]
 pub fn get_idx_bloom(bloom: &bloomfilter::Bloom, label: &[u8], num: u64) -> Option<u64> {
-
     for i in 0..(num as usize) {
         if bloom.check((i, label)) {
             return Some(i as u64);
@@ -71,9 +71,8 @@ pub fn get_idx_bloom(bloom: &bloomfilter::Bloom, label: &[u8], num: u64) -> Opti
 }
 
 
-// Returns the number of elements in a collection for the given collection_idx (this assumes hybrid 2 or 4)
+// Returns number of elements in collection for given collection_idx (this assumes hybrid 2 or 4)
 pub fn collection_len(bucket_len: u64, collection_idx: u32, num_collections: u32) -> u64 {
-
     if num_collections == 1 {
         bucket_len
     } else if num_collections == 2 {
@@ -123,7 +122,6 @@ pub fn label_marker(index: usize, buckets: usize) -> Vec<u8> {
 
 #[inline]
 pub fn bucket_idx(label: &[u8], partitions: &[Vec<u8>]) -> usize {
-
     for (i, partition) in partitions.iter().enumerate() {
         if label <= &partition[..] {
             return i;

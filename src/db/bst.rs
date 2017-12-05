@@ -6,7 +6,6 @@ pub trait BSTOrder {
 }
 
 impl<T: Clone> BSTOrder for Vec<T> {
-
     // Takes a sorted array of elements and produces an array that corresponds
     // to the compact representation (no pointers) of a complete Binary search tree.
     fn as_bst_order(&mut self) {
@@ -37,7 +36,6 @@ impl<T: Clone> BSTOrder for Vec<T> {
 
 
 fn find_idx(n: u32) -> u32 {
-
     if n == 1 {
         return 0;
     }

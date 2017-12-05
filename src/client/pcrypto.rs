@@ -49,7 +49,6 @@ pub struct PungKeys {
 /// Derives a pair of keys from a given secret. This function ensures the secret's randomness
 /// is uniformly distributed prior to generating the keys.
 pub fn derive_keys(secret: &[u8]) -> PungKeys {
-
     let digest = Sha256::new();
     let len = digest.output_bytes();
 
@@ -75,13 +74,16 @@ pub fn derive_keys(secret: &[u8]) -> PungKeys {
     assert_eq!(okm.len(), len);
 
     // Key lenghts are 256-bits each.
-    PungKeys { k_l: k_l, k_l2: k_l2, k_e: okm }
+    PungKeys {
+        k_l: k_l,
+        k_l2: k_l2,
+        k_e: okm,
+    }
 }
 
 /// Generates a Pung label from a round and a uid using a PRF keyed with
 /// the label key.
 pub fn gen_label(key: &[u8], round: u64, uid: u64, msg_num: u64, iter: u64) -> Vec<u8> {
-
     // Create PRF instance
     let mut prf = hmac::Hmac::new(Sha256::new(), &key[..]);
 
@@ -99,7 +101,6 @@ pub fn gen_label(key: &[u8], round: u64, uid: u64, msg_num: u64, iter: u64) -> V
 
 /// Encrypts a message under the given round with the encryption key.
 pub fn encrypt(key: &[u8], round: u64, message: &[u8]) -> (Vec<u8>, Vec<u8>) {
-
     assert!(message.len() <= MESSAGE_SIZE);
 
     let nonce: Vec<u8> = create_nonce!(round);
@@ -123,7 +124,6 @@ pub fn encrypt(key: &[u8], round: u64, message: &[u8]) -> (Vec<u8>, Vec<u8>) {
 /// Decrypts and verifies the authenticity of a ciphertext and returns
 /// the corresponding message or an error.
 pub fn decrypt(key: &[u8], round: u64, c: &[u8], mac: &[u8]) -> Result<Vec<u8>, Error> {
-
     assert_eq!(c.len(), MESSAGE_SIZE);
 
     let nonce: Vec<u8> = create_nonce!(round);
@@ -134,7 +134,9 @@ pub fn decrypt(key: &[u8], round: u64, c: &[u8], mac: &[u8]) -> Result<Vec<u8>, 
     let mut msg: Vec<u8> = repeat(0).take(c.len()).collect();
 
     if !ae.decrypt(c, &mut msg[..], mac) {
-        Err(Error::failed("Unable to decrypt ciphertext or verify mac".to_string()))
+        Err(Error::failed(
+            "Unable to decrypt ciphertext or verify mac".to_string(),
+        ))
     } else {
         Ok(msg)
     }

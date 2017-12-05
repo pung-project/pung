@@ -35,10 +35,10 @@ pub enum RetScheme {
 /// Type of optimization for retrieval scheme.
 #[derive(PartialEq, Eq, PartialOrd, Copy, Clone)]
 pub enum OptScheme {
-    Normal, // No optimization
+    Normal,   // No optimization
     Aliasing, // Storing messages under two labels
-    Hybrid2, // Hybrid with batch codes (supports 2 collisions per bucket) 
-    Hybrid4, // Hybrid with batch codes (supports 4 collisions per bucket) 
+    Hybrid2,  // Hybrid with batch codes (supports 2 collisions per bucket)
+    Hybrid4,  // Hybrid with batch codes (supports 4 collisions per bucket)
 }
 
 
@@ -80,9 +80,15 @@ pub struct Collection<'a> {
 }
 
 impl<'a> Database<'a> {
-    pub fn new(ret_scheme: RetScheme, opt_scheme: OptScheme, buckets: usize, depth: u64) -> Database<'a> {
-
-        let mut db = Database { buckets: Vec::new() };
+    pub fn new(
+        ret_scheme: RetScheme,
+        opt_scheme: OptScheme,
+        buckets: usize,
+        depth: u64,
+    ) -> Database<'a> {
+        let mut db = Database {
+            buckets: Vec::new(),
+        };
 
         for _ in 0..buckets {
             let bucket = Bucket::new(ret_scheme, opt_scheme, depth);
@@ -175,7 +181,11 @@ impl<'a> Database<'a> {
 
 impl<'a> Bucket<'a> {
     pub fn new(ret_scheme: RetScheme, opt_scheme: OptScheme, depth: u64) -> Bucket<'a> {
-        let mut b = Bucket { collections: Vec::new(), opt_scheme: opt_scheme, ret_scheme: ret_scheme };
+        let mut b = Bucket {
+            collections: Vec::new(),
+            opt_scheme: opt_scheme,
+            ret_scheme: ret_scheme,
+        };
 
         // Default is 1 collection
         b.collections.push(Collection::new(ret_scheme, depth));
@@ -236,7 +246,6 @@ impl<'a> Bucket<'a> {
 
     #[inline]
     pub fn unencoded_len(&self) -> usize {
-
         let mut count = self.collections[0].len();
 
         if self.opt_scheme == OptScheme::Hybrid2 {
@@ -275,22 +284,18 @@ impl<'a> Bucket<'a> {
 
     #[inline]
     pub fn encode(&mut self) {
-
         // Sort collection
         self.collections[0].sort();
 
-        if (self.opt_scheme == OptScheme::Normal || self.opt_scheme == OptScheme::Aliasing) &&
-           self.ret_scheme == RetScheme::Tree {
-
+        if (self.opt_scheme == OptScheme::Normal || self.opt_scheme == OptScheme::Aliasing)
+            && self.ret_scheme == RetScheme::Tree
+        {
             self.collections[0].as_bst_array();
-
-        } else if (self.opt_scheme == OptScheme::Normal || self.opt_scheme == OptScheme::Aliasing) &&
-                  self.ret_scheme == RetScheme::Bloom {
-
+        } else if (self.opt_scheme == OptScheme::Normal || self.opt_scheme == OptScheme::Aliasing)
+            && self.ret_scheme == RetScheme::Bloom
+        {
             self.collections[0].set_bloom();
-
         } else if self.opt_scheme == OptScheme::Hybrid2 {
-
             assert_eq!(self.collections.len(), 3);
 
             let len = self.len();
@@ -301,8 +306,10 @@ impl<'a> Bucket<'a> {
             // Setup the second collection with the remaining items
             self.collections[1].set_contents(tuples);
 
-            assert!(self.collections[0].len() == self.collections[1].len() ||
-                    self.collections[0].len() == self.collections[1].len() + 1);
+            assert!(
+                self.collections[0].len() == self.collections[1].len()
+                    || self.collections[0].len() == self.collections[1].len() + 1
+            );
 
             // If we are doing BST retrieval or Bloom
             if self.ret_scheme == RetScheme::Tree {
@@ -323,15 +330,17 @@ impl<'a> Bucket<'a> {
 
             // Missing one of them due to odd number of tuples. Get it from the first collection.
             if xor_tuples.len() != self.collections[0].len() {
-                xor_tuples.push(self.collections[0].get_tuple(self.collections[0].len() - 1).clone());
+                xor_tuples.push(
+                    self.collections[0]
+                        .get_tuple(self.collections[0].len() - 1)
+                        .clone(),
+                );
             }
 
             self.collections[2].set_contents(xor_tuples);
 
             assert_eq!(self.collections[0].len(), self.collections[2].len());
-
         } else if self.opt_scheme == OptScheme::Hybrid4 {
-
             assert_eq!(self.collections.len(), 9);
 
             let mut len = self.len();
@@ -356,13 +365,10 @@ impl<'a> Bucket<'a> {
 
             // If we are doing BST retrieval, convert to BSTs
             if self.ret_scheme == RetScheme::Tree {
-
                 for i in 0..4 {
                     self.collections[i].as_bst_array();
                 }
-
             } else if self.ret_scheme == RetScheme::Bloom {
-
                 for i in 0..4 {
                     self.collections[i].set_bloom();
                 }
@@ -373,16 +379,19 @@ impl<'a> Bucket<'a> {
             let plan = [(0, 1), (2, 3), (0, 2), (1, 3), (6, 7)];
 
             for (i, &(c1, c2)) in plan.iter().enumerate() {
-
                 let mut collection_i: Vec<PungTuple> = self.collections[c1]
                     .get_tuples()
                     .zip(self.collections[c2].get_tuples())
                     .map(|(a, b)| a ^ b)
                     .collect();
 
-                // Missing one of them due to odd number of tuples. Get it from the first collection.
+                // Missing one of them due to odd number of tuples. Get it from first collection.
                 if collection_i.len() != self.collections[c1].len() {
-                    collection_i.push(self.collections[c1].get_tuple(self.collections[c1].len() - 1).clone());
+                    collection_i.push(
+                        self.collections[c1]
+                            .get_tuple(self.collections[c1].len() - 1)
+                            .clone(),
+                    );
                 }
 
                 self.collections[i + 4].set_contents(collection_i);
@@ -391,21 +400,19 @@ impl<'a> Bucket<'a> {
 
             // Check the right numbers are present
             for i in 0..4 {
-                assert_eq!(self.collections[i].len() as u64,
-                           util::collection_len(self.unencoded_len() as u64, i as u32, 4));
+                assert_eq!(
+                    self.collections[i].len() as u64,
+                    util::collection_len(self.unencoded_len() as u64, i as u32, 4)
+                );
             }
         }
-
     }
 
     #[inline]
     pub fn mid_labels(&self) -> Vec<Vec<u8>> {
-
         if self.opt_scheme == OptScheme::Hybrid2 {
-
             let lmid = match self.ret_scheme {
                 RetScheme::Explicit | RetScheme::Bloom => {
-
                     // lmid is the first element
                     match self.collections[1].get_first() {
                         Some(v) => v.label().to_vec(),
@@ -427,9 +434,7 @@ impl<'a> Bucket<'a> {
             };
 
             vec![lmid]
-
         } else if self.opt_scheme == OptScheme::Hybrid4 {
-
             let mut lmids = Vec::with_capacity(3);
 
             for i in 1..4 {
@@ -446,7 +451,8 @@ impl<'a> Bucket<'a> {
                         // lmid is th emost bottom-left element
                         if !self.collections[i].is_empty() {
                             let h = util::tree_height(self.collections[i].len() as u64);
-                            let lmid = self.collections[i].get_tuple((2u64.pow(h - 1) - 1) as usize);
+                            let lmid =
+                                self.collections[i].get_tuple((2u64.pow(h - 1) - 1) as usize);
                             lmid.label().to_vec()
                         } else {
                             vec![]
@@ -458,7 +464,6 @@ impl<'a> Bucket<'a> {
             }
 
             lmids
-
         } else {
             vec![]
         }
@@ -478,7 +483,6 @@ impl<'a> Bucket<'a> {
 impl<'a> Collection<'a> {
     /// Creates a new empty Collection.
     pub fn new(ret_scheme: RetScheme, depth: u64) -> Collection<'a> {
-
         Collection {
             set: Vec::new(),
             ret_scheme: ret_scheme,
@@ -550,7 +554,6 @@ impl<'a> Collection<'a> {
 
 
     pub fn set_bloom(&mut self) {
-
         let mut bloom = util::bloomfilter::Bloom::new_for_fp_rate(self.len(), BLOOM_FP);
 
         for (i, t) in self.set.iter().enumerate() {
@@ -580,15 +583,12 @@ impl<'a> Collection<'a> {
     /// an array representation of a complete binary search tree (i.e.,
     /// this encodes a collection as a complete BST).
     pub fn as_bst_array(&mut self) {
-
         if self.ret_scheme == RetScheme::Tree {
             self.set.as_bst_order();
         }
-
     }
 
     pub fn pir_setup(&mut self) {
-
         let depth = self.depth;
 
         let levels = self.num_levels();
@@ -611,13 +611,9 @@ impl<'a> Collection<'a> {
     /// Gets all the Tuples at a particular level in the BST representation.
     #[inline]
     pub fn get_level(&'a self, level: usize) -> &'a [PungTuple] {
-
         if self.ret_scheme == RetScheme::Explicit || self.ret_scheme == RetScheme::Bloom {
-
             &self.set[..]
-
         } else {
-
             let min = (2u64.pow(level as u32) - 1) as usize;
             let mut max = (2u64.pow(level as u32 + 1) - 1) as usize;
 
