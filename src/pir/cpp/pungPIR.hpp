@@ -7,7 +7,7 @@
 
 #include <iostream>
 #include "libpir.hpp"
-#include "apps/server/DBArrayProcessor.hpp"
+#include "pir/dbhandlers/DBArrayProcessor.hpp"
 #include <math.h>
 
 using namespace std;
