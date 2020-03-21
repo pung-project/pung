@@ -11,21 +11,21 @@ use super::PirAnswer;
 //#[link(name = "boost_system")]
 extern "C" {
     fn cpp_server_setup(
-        len: libc::uint64_t,
-        collection: *const libc::uint8_t,
-        num: libc::uint64_t,
-        alpha: libc::uint64_t,
-        depth: libc::uint64_t,
+        len: u64,
+        collection: *const u8,
+        num: u64,
+        alpha: u64,
+        depth: u64,
     ) -> *mut libc::c_void;
 
     fn cpp_server_process_query(
         server: *const libc::c_void,
-        q: *const libc::uint8_t,
-        q_len: libc::uint64_t,
-        q_num: libc::uint64_t,
-        a_len: *mut libc::uint64_t, // answer length
-        a_num: *mut libc::uint64_t,
-    ) -> *mut libc::uint8_t;
+        q: *const u8,
+        q_len: u64,
+        q_num: u64,
+        a_len: *mut u64, // answer length
+        a_num: *mut u64,
+    ) -> *mut u8;
 
     fn cpp_server_free(server: *mut libc::c_void);
 }

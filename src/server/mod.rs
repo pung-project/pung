@@ -93,12 +93,12 @@ pub fn run_rpc(
 
     gj::EventLoop::top_level(move |wait_scope| -> Result<(), capnp::Error> {
         // create event port
-        let mut event_port = try!(gjio::EventPort::new());
+        let mut event_port = gjio::EventPort::new()?;
         let network = event_port.get_network();
         let mut address = network.get_tcp_address(addr);
 
         // create a listener for Pung's RPC server
-        let listener = try!(address.listen());
+        let listener = address.listen()?;
 
         // instance of the pung RPC server
         let connection = pung_rpc::ToClient::new(PungRpc::new(
@@ -113,7 +113,7 @@ pub fn run_rpc(
         // defines a set that holds all promises ("tasks") and a destructor in case they go awry
         let task_set = gj::TaskSet::new(Box::new(reaper::Reaper));
 
-        try!(accept_loop(listener, task_set, connection).wait(wait_scope, &mut event_port));
+        accept_loop(listener, task_set, connection).wait(wait_scope, &mut event_port)?;
 
         Ok(())
     }).expect("top level error running server RPC");
