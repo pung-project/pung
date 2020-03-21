@@ -11,35 +11,35 @@ use super::{PirQuery, PirResult};
 // #[link(name = "boost_system")]
 extern "C" {
     fn cpp_client_setup(
-        len: libc::uint64_t,
-        num: libc::uint64_t,
-        alpha: libc::uint64_t,
-        depth: libc::uint64_t,
+        len: u64,
+        num: u64,
+        alpha: u64,
+        depth: u64,
     ) -> *mut libc::c_void;
 
     fn cpp_client_generate_query(
         client: *const libc::c_void,
-        index: libc::uint64_t,
-        q_len: *mut libc::uint64_t,
-        q_num: *mut libc::uint64_t,
-    ) -> *mut libc::uint8_t;
+        index: u64,
+        q_len: *mut u64,
+        q_num: *mut u64,
+    ) -> *mut u8;
 
     fn cpp_client_process_reply(
         client: *const libc::c_void,
-        answer: *const libc::uint8_t,
-        a_len: libc::uint64_t,
-        a_num: libc::uint64_t,
-        r_len: *mut libc::uint64_t,
-    ) -> *mut libc::uint8_t;
+        answer: *const u8,
+        a_len: u64,
+        a_num: u64,
+        r_len: *mut u64,
+    ) -> *mut u8;
 
     fn cpp_client_free(client: *mut libc::c_void);
 
     fn cpp_client_update_db_params(
         client: *const libc::c_void,
-        len: libc::uint64_t,
-        num: libc::uint64_t,
-        alpha: libc::uint64_t,
-        depth: libc::uint64_t,
+        len: u64,
+        num: u64,
+        alpha: u64,
+        depth: u64,
     );
 }
 
