@@ -149,18 +149,18 @@ pub fn main() {
             client.add_peer(&peer_name, &secret);
 
             // Register with the service
-            let unique_id: u64 = try!(client.register(&wait_scope, &mut event_port));
+            let unique_id: u64 = (client.register(&wait_scope, &mut event_port))?;
             println!("{} - Registered with Pung server", unique_id);
 
             // Changing the extra tuple value at the server (if requested).
             if extra > 0 {
-                try!(client.extra(extra, &wait_scope, &mut event_port));
+                client.extra(extra, &wait_scope, &mut event_port)?;
                 println!("{} - Changing the extra tuples value at Pung server to {}", unique_id, extra);
             }
 
             // Get current round number
             println!("{} - Synchronizing with the Pung server", unique_id);
-            try!(client.sync(&wait_scope, &mut event_port));
+            client.sync(&wait_scope, &mut event_port)?;
 
             //        std::thread::sleep(std::time::Duration::new(5, 0));
 
@@ -180,7 +180,7 @@ pub fn main() {
                 let start = PreciseTime::now();
 
                 // send tuple
-                try!(client.send(&peer_name, &mut messages, &wait_scope, &mut event_port));
+                client.send(&peer_name, &mut messages, &wait_scope, &mut event_port)?;
 
                 let end = PreciseTime::now();
                 let duration = start.to(end);
@@ -200,7 +200,7 @@ pub fn main() {
                     peers.push(&peer_name);
                 }
 
-                let msgs = try!(client.retr(&peers[..], &wait_scope, &mut event_port));
+                let msgs = client.retr(&peers[..], &wait_scope, &mut event_port)?;
 
                 let end = PreciseTime::now();
                 println!("retr ({} msgs): {:?} usec",
@@ -218,7 +218,7 @@ pub fn main() {
             let duration = start_round.to(end_round);
             println!("processed {} rounds in {} usec", rounds, duration.num_microseconds().unwrap());
 
-            try!(client.close(&wait_scope, &mut event_port));
+            client.close(&wait_scope, &mut event_port)?;
 
             Ok(())
         })
