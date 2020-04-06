@@ -11,23 +11,25 @@ for details about the protocol and its guarantees.
 
 # Compiling Pung
 
-Pung is written in [Rust](https://www.rust-lang.org/) and compiles under the nightly compiler (nighly
-  is required for our benchmarking framework).
-If you wish to use the nightly compiler as default simply run:
+Pung is written in [Rust](https://www.rust-lang.org/) and compiles under the 
+  nightly compiler (nighly is required for our benchmarking framework).
+We have tested up to nightly-2019-06-04 and are aware that more recent
+  versions of Rust cause issues with some of Pung's dependencies.
+We assume that you have already installed [rustup](https://rustup.rs/).
+
+You can run the following from the Pung directory to set the nightly compiler
+to a particular version that works for Pung (this will affect only
+the Pung folder, not any of your other projects).
 
 ```sh
-$ rustup install nightly
-$ rustup default nightly
+$ rustup override set nightly-2019-02-01
 ```
 
-Alternatively, you can run the following from the Pung directory to set the nightly
-compiler only for Pung.
+Or if you wish to use this version as default simply run:
 
 ```sh
-$ rustup install nightly
-$ rustup override set nightly
+$ rustup default nightly-2019-02-01
 ```
-
 
 ## Dependencies
 
@@ -59,7 +61,7 @@ XPIR depends on boost >= 1.55, gmp, and mpfr. You can install them as follows.
 Ubuntu 14.04 (or later) / Debian:
 
 ```sh
-$ sudo apt-get install libboost1.55-all-dev libmpfr-dev libgmp-dev
+$ sudo apt-get install libboost-all-dev libmpfr-dev libgmp-dev
 ```
 
 Arch:
