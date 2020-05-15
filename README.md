@@ -1,5 +1,4 @@
 # Pung: Unobservable communication over fully untrusted infrastructure
-[![Build Status](https://travis-ci.org/pung-project/pung.svg?branch=master)](https://travis-ci.org/pung-project/pung)
 
 Pung is a (research) communication system where users can privately talk to each other
 over a fully untrusted channel. 
